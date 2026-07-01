@@ -1,10 +1,124 @@
+import { useState } from 'react'
 import { useSlidesStore } from '@/store/slidesStore'
+import { uploadSlideImage } from '@/lib/storage'
+import type { HeroSlide } from '@/types'
+
+function SlideCard({ slide }: { slide: HeroSlide }) {
+  const updateSlide = useSlidesStore((s) => s.updateSlide)
+  const deleteSlide = useSlidesStore((s) => s.deleteSlide)
+
+  const [title, setTitle] = useState(slide.title)
+  const [subtitle, setSubtitle] = useState(slide.subtitle)
+  const [imageUrl, setImageUrl] = useState(slide.imageUrl)
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const dirty = title !== slide.title || subtitle !== slide.subtitle || imageUrl !== slide.imageUrl
+
+  async function handleSave() {
+    setSaving(true)
+    await updateSlide(slide.id, { title, subtitle, imageUrl })
+    setSaving(false)
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      setImageUrl(await uploadSlideImage(file))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+            slide.published ? 'bg-success/20 text-success' : 'bg-gray-800 text-gray-400'
+          }`}
+        >
+          {slide.published ? 'Publicado' : 'Borrador'}
+        </span>
+        <button
+          type="button"
+          onClick={() => updateSlide(slide.id, { published: !slide.published })}
+          className="text-xs text-primary-500 hover:underline"
+        >
+          {slide.published ? 'Despublicar' : 'Publicar'}
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm text-gray-400">
+          Titulo
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+          />
+        </label>
+        <label className="block text-sm text-gray-400">
+          Subtitulo
+          <input
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+          />
+        </label>
+        <label className="block text-sm text-gray-400 sm:col-span-2">
+          URL de imagen
+          <input
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://..."
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+          />
+        </label>
+        <label className="block text-sm text-gray-400 sm:col-span-2">
+          O subir imagen desde la computadora
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="mt-1 w-full text-sm text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-800 file:px-3 file:py-1.5 file:text-gray-100"
+          />
+          {uploading && <span className="text-xs text-gray-500">Subiendo...</span>}
+        </label>
+      </div>
+
+      {imageUrl && (
+        <img src={imageUrl} alt="" className="mt-3 h-24 w-full rounded-lg object-cover" />
+      )}
+
+      <div className="mt-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => deleteSlide(slide.id)}
+          className="text-xs text-danger hover:underline"
+        >
+          Eliminar slide
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!dirty || saving}
+          className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+        >
+          {saving ? 'Guardando...' : dirty ? 'Guardar cambios' : 'Guardado'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export function Slides() {
   const slides = useSlidesStore((s) => s.slides)
   const addSlide = useSlidesStore((s) => s.addSlide)
-  const updateSlide = useSlidesStore((s) => s.updateSlide)
-  const deleteSlide = useSlidesStore((s) => s.deleteSlide)
+
+  const sortedSlides = [...slides].sort((a, b) => a.order - b.order)
 
   return (
     <div className="space-y-4">
@@ -13,7 +127,13 @@ export function Slides() {
         <button
           type="button"
           onClick={() =>
-            addSlide({ imageUrl: '', title: 'Nuevo slide', subtitle: '', order: slides.length })
+            addSlide({
+              imageUrl: '',
+              title: 'Nuevo slide',
+              subtitle: '',
+              order: slides.length,
+              published: false,
+            })
           }
           className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
         >
@@ -22,46 +142,9 @@ export function Slides() {
       </div>
 
       <div className="space-y-3">
-        {slides
-          .sort((a, b) => a.order - b.order)
-          .map((slide) => (
-            <div key={slide.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm text-gray-400">
-                  Titulo
-                  <input
-                    value={slide.title}
-                    onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-                  />
-                </label>
-                <label className="block text-sm text-gray-400">
-                  Subtitulo
-                  <input
-                    value={slide.subtitle}
-                    onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-                  />
-                </label>
-                <label className="block text-sm text-gray-400 sm:col-span-2">
-                  URL de imagen
-                  <input
-                    value={slide.imageUrl}
-                    onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-                  />
-                </label>
-              </div>
-              <button
-                type="button"
-                onClick={() => deleteSlide(slide.id)}
-                className="mt-3 text-xs text-danger hover:underline"
-              >
-                Eliminar slide
-              </button>
-            </div>
-          ))}
+        {sortedSlides.map((slide) => (
+          <SlideCard key={slide.id} slide={slide} />
+        ))}
         {slides.length === 0 && <p className="text-sm text-gray-500">No hay slides cargados.</p>}
       </div>
     </div>

@@ -4,26 +4,22 @@ import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
-import { useProductsStore } from '@/store/productsStore'
 import { getAvailableSlots } from '@/lib/availability'
 import { formatCurrency, todayKey } from '@/lib/format'
 import { KpiCard } from '@/components/KpiCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { NuevaReservaModal } from './NuevaReservaModal'
-import type { PaymentMethod } from '@/types'
+import { VentaRapidaCard } from './VentaRapidaCard'
+import { AcreedoresCard } from './AcreedoresCard'
 
 export function Dashboard() {
   const settings = useSettingsStore()
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
-  const addSale = useSalesStore((s) => s.addSale)
   const tournaments = useTournamentsStore((s) => s.tournaments)
-  const products = useProductsStore((s) => s.products)
 
   const [showModal, setShowModal] = useState(false)
-  const [quantities, setQuantities] = useState<Record<string, number>>({})
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
 
   const today = todayKey()
   const todayReservations = useMemo(
@@ -45,27 +41,6 @@ export function Dashboard() {
     { length: settings.closeHour - settings.openHour },
     (_, i) => settings.openHour + i,
   )
-
-  const cartTotal = products.reduce(
-    (sum, p) => sum + (quantities[p.id] ?? 0) * p.price,
-    0,
-  )
-
-  function handleQtyChange(productId: string, delta: number) {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] ?? 0) + delta),
-    }))
-  }
-
-  async function handleConfirmSale() {
-    const items = products
-      .filter((p) => (quantities[p.id] ?? 0) > 0)
-      .map((p) => ({ productId: p.id, qty: quantities[p.id], unitPrice: p.price }))
-    if (items.length === 0) return
-    await addSale(items, paymentMethod)
-    setQuantities({})
-  }
 
   return (
     <div className="space-y-6">
@@ -148,67 +123,8 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="mb-3 text-sm font-medium text-gray-300">Venta rapida</p>
-            <div className="space-y-2">
-              {products.map((p) => (
-                <div key={p.id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-300">
-                    {p.name} <span className="text-gray-500">{formatCurrency(p.price)}</span>
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQtyChange(p.id, -1)}
-                      className="h-6 w-6 rounded bg-gray-800 text-gray-300"
-                    >
-                      -
-                    </button>
-                    <span className="w-4 text-center text-gray-100">
-                      {quantities[p.id] ?? 0}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleQtyChange(p.id, 1)}
-                      className="h-6 w-6 rounded bg-gray-800 text-gray-300"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-gray-400">Total</span>
-              <span className="font-semibold text-gray-50">{formatCurrency(cartTotal)}</span>
-            </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {(['efectivo', 'transferencia', 'mixto'] as PaymentMethod[]).map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => setPaymentMethod(method)}
-                  className={`rounded-lg border py-1.5 text-xs capitalize ${
-                    paymentMethod === method
-                      ? 'border-primary-500 bg-primary-500/10 text-primary-500'
-                      : 'border-gray-800 text-gray-400'
-                  }`}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleConfirmSale}
-              className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
-            >
-              Confirmar venta
-            </button>
-          </div>
+          <VentaRapidaCard />
+          <AcreedoresCard />
         </div>
       </div>
 

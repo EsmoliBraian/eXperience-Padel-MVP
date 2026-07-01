@@ -29,15 +29,22 @@ export interface Reservation {
 export interface Product {
   id: string
   name: string
+  description: string
   price: number
 }
 
 export type PaymentMethod = 'efectivo' | 'transferencia' | 'mixto'
+export type SplitPaymentMethod = 'efectivo' | 'transferencia'
 
 export interface SaleItem {
   productId: string
   qty: number
   unitPrice: number
+}
+
+export interface SalePayment {
+  method: SplitPaymentMethod
+  amount: number
 }
 
 export interface Sale {
@@ -46,6 +53,8 @@ export interface Sale {
   items: SaleItem[]
   total: number
   paymentMethod: PaymentMethod
+  reservationId?: string
+  payments: SalePayment[]
 }
 
 export interface Tournament {
@@ -54,6 +63,7 @@ export interface Tournament {
   date: string // YYYY-MM-DD
   description: string
   imageUrl?: string
+  published: boolean
 }
 
 export interface HeroSlide {
@@ -62,4 +72,13 @@ export interface HeroSlide {
   title: string
   subtitle: string
   order: number
+  published: boolean
+}
+
+export interface Debtor {
+  id: string
+  customerName: string
+  amount: number
+  detail: string
+  paid: boolean
 }

@@ -8,6 +8,7 @@ interface TournamentRow {
   date: string
   description: string
   image_url: string | null
+  published: boolean
 }
 
 function fromRow(row: TournamentRow): Tournament {
@@ -17,6 +18,7 @@ function fromRow(row: TournamentRow): Tournament {
     date: row.date,
     description: row.description,
     imageUrl: row.image_url ?? undefined,
+    published: row.published,
   }
 }
 
@@ -46,6 +48,7 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
         date: tournament.date,
         description: tournament.description,
         image_url: tournament.imageUrl ?? null,
+        published: tournament.published,
       })
       .select()
       .single()
@@ -57,6 +60,7 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
     if (patch.date !== undefined) row.date = patch.date
     if (patch.description !== undefined) row.description = patch.description
     if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl ?? null
+    if (patch.published !== undefined) row.published = patch.published
 
     const { error } = await supabase.from('tournaments').update(row).eq('id', id)
     if (!error) {

@@ -6,6 +6,7 @@ import { useProductsStore } from '@/store/productsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
+import { useDebtorsStore } from '@/store/debtorsStore'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 export function useHydrateStores() {
@@ -17,6 +18,7 @@ export function useHydrateStores() {
     useSalesStore.getState().fetchSales()
     useTournamentsStore.getState().fetchTournaments()
     useSlidesStore.getState().fetchSlides()
+    useDebtorsStore.getState().fetchDebtors()
     useAdminAuthStore.getState().init()
   }, [])
 }

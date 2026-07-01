@@ -8,6 +8,7 @@ interface SlideRow {
   title: string
   subtitle: string
   order: number
+  published: boolean
 }
 
 function fromRow(row: SlideRow): HeroSlide {
@@ -17,6 +18,7 @@ function fromRow(row: SlideRow): HeroSlide {
     title: row.title,
     subtitle: row.subtitle,
     order: row.order,
+    published: row.published,
   }
 }
 
@@ -46,6 +48,7 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
         title: slide.title,
         subtitle: slide.subtitle,
         order: slide.order,
+        published: slide.published,
       })
       .select()
       .single()
@@ -57,6 +60,7 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
     if (patch.title !== undefined) row.title = patch.title
     if (patch.subtitle !== undefined) row.subtitle = patch.subtitle
     if (patch.order !== undefined) row.order = patch.order
+    if (patch.published !== undefined) row.published = patch.published
 
     const { error } = await supabase.from('hero_slides').update(row).eq('id', id)
     if (!error) {

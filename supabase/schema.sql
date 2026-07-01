@@ -1,5 +1,7 @@
 -- eXperience Padel MVP schema
--- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query).
+-- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query)
+-- for a brand new project. If you already ran this file before, don't
+-- re-run it — apply supabase/migrations/002_features.sql instead.
 
 create extension if not exists pgcrypto;
 
@@ -34,6 +36,7 @@ create table if not exists reservations (
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  description text not null default '',
   price numeric not null
 );
 
@@ -42,6 +45,7 @@ create table if not exists sales (
   date date not null,
   total numeric not null,
   payment_method text not null check (payment_method in ('efectivo', 'transferencia', 'mixto')),
+  reservation_id uuid references reservations(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -53,12 +57,20 @@ create table if not exists sale_items (
   unit_price numeric not null
 );
 
+create table if not exists sale_payments (
+  id uuid primary key default gen_random_uuid(),
+  sale_id uuid not null references sales(id) on delete cascade,
+  method text not null check (method in ('efectivo', 'transferencia')),
+  amount numeric not null
+);
+
 create table if not exists tournaments (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   date date not null,
   description text not null default '',
-  image_url text
+  image_url text,
+  published boolean not null default true
 );
 
 create table if not exists hero_slides (
@@ -66,7 +78,17 @@ create table if not exists hero_slides (
   image_url text not null default '',
   title text not null,
   subtitle text not null default '',
-  "order" int not null default 0
+  "order" int not null default 0,
+  published boolean not null default true
+);
+
+create table if not exists debtors (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text not null,
+  amount numeric not null,
+  detail text not null default '',
+  paid boolean not null default false,
+  created_at timestamptz not null default now()
 );
 
 -- Row level security: everyone can read; only logged-in admins can write,
@@ -77,8 +99,10 @@ alter table reservations enable row level security;
 alter table products enable row level security;
 alter table sales enable row level security;
 alter table sale_items enable row level security;
+alter table sale_payments enable row level security;
 alter table tournaments enable row level security;
 alter table hero_slides enable row level security;
+alter table debtors enable row level security;
 
 create policy "public read settings" on settings for select using (true);
 create policy "admin write settings" on settings for all
@@ -111,9 +135,28 @@ create policy "public read tournaments" on tournaments for select using (true);
 create policy "admin write tournaments" on tournaments for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+create policy "public read sale_payments" on sale_payments for select using (true);
+create policy "admin write sale_payments" on sale_payments for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
 create policy "public read hero_slides" on hero_slides for select using (true);
 create policy "admin write hero_slides" on hero_slides for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create policy "public read debtors" on debtors for select using (true);
+create policy "admin write debtors" on debtors for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Storage bucket for hero slide images, uploaded from the admin panel.
+insert into storage.buckets (id, name, public)
+values ('slides', 'slides', true)
+on conflict (id) do nothing;
+
+create policy "public read slide images" on storage.objects for select
+  using (bucket_id = 'slides');
+create policy "admin write slide images" on storage.objects for all
+  using (bucket_id = 'slides' and auth.role() = 'authenticated')
+  with check (bucket_id = 'slides' and auth.role() = 'authenticated');
 
 -- Seed: structural minimum so the app isn't empty on first load.
 -- Real reservations/sales/tournaments accumulate from actual use.

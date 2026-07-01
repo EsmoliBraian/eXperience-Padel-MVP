@@ -6,8 +6,8 @@ import { formatLongDate, fromDateKey } from '@/lib/format'
 
 export function UserHomePage() {
   const venueName = useSettingsStore((s) => s.venueName)
-  const tournaments = useTournamentsStore((s) => s.tournaments)
-  const slides = useSlidesStore((s) => s.slides)
+  const tournaments = useTournamentsStore((s) => s.tournaments).filter((t) => t.published)
+  const slides = useSlidesStore((s) => s.slides).filter((s) => s.published)
   const hero = [...slides].sort((a, b) => a.order - b.order)[0]
 
   return (

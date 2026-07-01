@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useSalesStore } from '@/store/salesStore'
 import { useProductsStore } from '@/store/productsStore'
+import { useReservationsStore } from '@/store/reservationsStore'
 import { formatCurrency, todayKey } from '@/lib/format'
 import type { PaymentMethod } from '@/types'
 
@@ -13,6 +14,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 export function VentasDelDia() {
   const sales = useSalesStore((s) => s.sales)
   const products = useProductsStore((s) => s.products)
+  const reservations = useReservationsStore((s) => s.reservations)
 
   const today = todayKey()
   const todaySales = useMemo(
@@ -29,6 +31,12 @@ export function VentasDelDia() {
 
   function productName(productId: string) {
     return products.find((p) => p.id === productId)?.name ?? productId
+  }
+
+  function linkedTurno(reservationId?: string) {
+    if (!reservationId) return null
+    const reservation = reservations.find((r) => r.id === reservationId)
+    return reservation ? `${reservation.time}hs` : null
   }
 
   return (
@@ -55,6 +63,7 @@ export function VentasDelDia() {
           <thead>
             <tr className="border-b border-gray-800 text-left text-gray-500">
               <th className="p-3">Productos</th>
+              <th className="p-3">Turno</th>
               <th className="p-3">Metodo de pago</th>
               <th className="p-3">Total</th>
             </tr>
@@ -65,13 +74,25 @@ export function VentasDelDia() {
                 <td className="p-3 text-gray-300">
                   {sale.items.map((item) => `${item.qty}x ${productName(item.productId)}`).join(', ')}
                 </td>
-                <td className="p-3 text-gray-300">{PAYMENT_LABELS[sale.paymentMethod]}</td>
+                <td className="p-3 text-gray-300">{linkedTurno(sale.reservationId) ?? '-'}</td>
+                <td className="p-3 text-gray-300">
+                  {PAYMENT_LABELS[sale.paymentMethod]}
+                  {sale.paymentMethod === 'mixto' && sale.payments.length > 0 && (
+                    <ul className="mt-1 text-xs text-gray-500">
+                      {sale.payments.map((p, i) => (
+                        <li key={i}>
+                          {PAYMENT_LABELS[p.method]}: {formatCurrency(p.amount)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
                 <td className="p-3 text-gray-100">{formatCurrency(sale.total)}</td>
               </tr>
             ))}
             {todaySales.length === 0 && (
               <tr>
-                <td colSpan={3} className="p-4 text-center text-gray-500">
+                <td colSpan={4} className="p-4 text-center text-gray-500">
                   Todavia no hay ventas hoy.
                 </td>
               </tr>

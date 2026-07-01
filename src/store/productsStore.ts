@@ -16,7 +16,10 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
   loading: false,
   fetchProducts: async () => {
     set({ loading: true })
-    const { data, error } = await supabase.from('products').select('id, name, price').order('name')
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, name, description, price')
+      .order('name')
     if (!error && data) set({ products: data })
     set({ loading: false })
   },
