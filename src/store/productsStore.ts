@@ -6,9 +6,9 @@ interface ProductsState {
   products: Product[]
   loading: boolean
   fetchProducts: () => Promise<void>
-  addProduct: (product: Omit<Product, 'id'>) => Promise<void>
-  updateProduct: (id: string, patch: Partial<Omit<Product, 'id'>>) => Promise<void>
-  deleteProduct: (id: string) => Promise<void>
+  addProduct: (product: Omit<Product, 'id'>) => Promise<string | null>
+  updateProduct: (id: string, patch: Partial<Omit<Product, 'id'>>) => Promise<string | null>
+  deleteProduct: (id: string) => Promise<string | null>
 }
 
 export const useProductsStore = create<ProductsState>()((set, get) => ({
@@ -25,16 +25,20 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
   },
   addProduct: async (product) => {
     const { data, error } = await supabase.from('products').insert(product).select().single()
-    if (!error && data) set({ products: [...get().products, data] })
+    if (error) return error.message
+    set({ products: [...get().products, data] })
+    return null
   },
   updateProduct: async (id, patch) => {
     const { error } = await supabase.from('products').update(patch).eq('id', id)
-    if (!error) {
-      set({ products: get().products.map((p) => (p.id === id ? { ...p, ...patch } : p)) })
-    }
+    if (error) return error.message
+    set({ products: get().products.map((p) => (p.id === id ? { ...p, ...patch } : p)) })
+    return null
   },
   deleteProduct: async (id) => {
     const { error } = await supabase.from('products').delete().eq('id', id)
-    if (!error) set({ products: get().products.filter((p) => p.id !== id) })
+    if (error) return error.message
+    set({ products: get().products.filter((p) => p.id !== id) })
+    return null
   },
 }))

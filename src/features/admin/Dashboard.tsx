@@ -124,9 +124,10 @@ export function Dashboard() {
           </div>
 
           <VentaRapidaCard />
-          <AcreedoresCard />
         </div>
       </div>
+
+      <AcreedoresCard />
 
       {showModal && <NuevaReservaModal onClose={() => setShowModal(false)} />}
     </div>

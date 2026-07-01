@@ -49,7 +49,7 @@ interface SalesState {
     paymentMethod: PaymentMethod,
     payments: SalePayment[],
     reservationId?: string,
-  ) => Promise<void>
+  ) => Promise<string | null>
 }
 
 export const useSalesStore = create<SalesState>()((set, get) => ({
@@ -78,7 +78,7 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
       })
       .select()
       .single()
-    if (saleError || !sale) return
+    if (saleError || !sale) return saleError?.message ?? 'No se pudo registrar la venta.'
 
     const { error: itemsError } = await supabase.from('sale_items').insert(
       items.map((item) => ({
@@ -88,13 +88,13 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
         unit_price: item.unitPrice,
       })),
     )
-    if (itemsError) return
+    if (itemsError) return itemsError.message
 
     if (paymentMethod === 'mixto' && payments.length > 0) {
       const { error: paymentsError } = await supabase.from('sale_payments').insert(
         payments.map((p) => ({ sale_id: sale.id, method: p.method, amount: p.amount })),
       )
-      if (paymentsError) return
+      if (paymentsError) return paymentsError.message
     }
 
     set({
@@ -111,5 +111,6 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
         },
       ],
     })
+    return null
   },
 }))

@@ -24,9 +24,9 @@ interface DebtorsState {
   debtors: Debtor[]
   loading: boolean
   fetchDebtors: () => Promise<void>
-  addDebtor: (debtor: Omit<Debtor, 'id' | 'paid'>) => Promise<void>
-  markPaid: (id: string) => Promise<void>
-  deleteDebtor: (id: string) => Promise<void>
+  addDebtor: (debtor: Omit<Debtor, 'id' | 'paid'>) => Promise<string | null>
+  markPaid: (id: string) => Promise<string | null>
+  deleteDebtor: (id: string) => Promise<string | null>
 }
 
 export const useDebtorsStore = create<DebtorsState>()((set, get) => ({
@@ -51,16 +51,20 @@ export const useDebtorsStore = create<DebtorsState>()((set, get) => ({
       })
       .select()
       .single()
-    if (!error && data) set({ debtors: [fromRow(data), ...get().debtors] })
+    if (error) return error.message
+    set({ debtors: [fromRow(data), ...get().debtors] })
+    return null
   },
   markPaid: async (id) => {
     const { error } = await supabase.from('debtors').update({ paid: true }).eq('id', id)
-    if (!error) {
-      set({ debtors: get().debtors.map((d) => (d.id === id ? { ...d, paid: true } : d)) })
-    }
+    if (error) return error.message
+    set({ debtors: get().debtors.map((d) => (d.id === id ? { ...d, paid: true } : d)) })
+    return null
   },
   deleteDebtor: async (id) => {
     const { error } = await supabase.from('debtors').delete().eq('id', id)
-    if (!error) set({ debtors: get().debtors.filter((d) => d.id !== id) })
+    if (error) return error.message
+    set({ debtors: get().debtors.filter((d) => d.id !== id) })
+    return null
   },
 }))

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSlidesStore } from '@/store/slidesStore'
 import { uploadSlideImage } from '@/lib/storage'
+import { ErrorText } from '@/components/ErrorText'
 import type { HeroSlide } from '@/types'
 
 function SlideCard({ slide }: { slide: HeroSlide }) {
@@ -12,24 +13,36 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   const [imageUrl, setImageUrl] = useState(slide.imageUrl)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const dirty = title !== slide.title || subtitle !== slide.subtitle || imageUrl !== slide.imageUrl
 
   async function handleSave() {
     setSaving(true)
-    await updateSlide(slide.id, { title, subtitle, imageUrl })
+    setError(await updateSlide(slide.id, { title, subtitle, imageUrl }))
     setSaving(false)
+  }
+
+  async function handlePublishToggle() {
+    setError(await updateSlide(slide.id, { published: !slide.published }))
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setError(null)
     try {
       setImageUrl(await uploadSlideImage(file))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo subir la imagen.')
     } finally {
       setUploading(false)
     }
+  }
+
+  async function handleDelete() {
+    setError(await deleteSlide(slide.id))
   }
 
   return (
@@ -44,7 +57,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
         </span>
         <button
           type="button"
-          onClick={() => updateSlide(slide.id, { published: !slide.published })}
+          onClick={handlePublishToggle}
           className="text-xs text-primary-500 hover:underline"
         >
           {slide.published ? 'Despublicar' : 'Publicar'}
@@ -93,10 +106,12 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
         <img src={imageUrl} alt="" className="mt-3 h-24 w-full rounded-lg object-cover" />
       )}
 
+      <ErrorText error={error} />
+
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => deleteSlide(slide.id)}
+          onClick={handleDelete}
           className="text-xs text-danger hover:underline"
         >
           Eliminar slide
@@ -117,8 +132,21 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
 export function Slides() {
   const slides = useSlidesStore((s) => s.slides)
   const addSlide = useSlidesStore((s) => s.addSlide)
+  const [error, setError] = useState<string | null>(null)
 
   const sortedSlides = [...slides].sort((a, b) => a.order - b.order)
+
+  async function handleAdd() {
+    setError(
+      await addSlide({
+        imageUrl: '',
+        title: 'Nuevo slide',
+        subtitle: '',
+        order: slides.length,
+        published: false,
+      }),
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -126,20 +154,14 @@ export function Slides() {
         <h1 className="text-xl font-semibold text-gray-50">Slides / Hero</h1>
         <button
           type="button"
-          onClick={() =>
-            addSlide({
-              imageUrl: '',
-              title: 'Nuevo slide',
-              subtitle: '',
-              order: slides.length,
-              published: false,
-            })
-          }
+          onClick={handleAdd}
           className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
         >
           + Nuevo slide
         </button>
       </div>
+
+      <ErrorText error={error} />
 
       <div className="space-y-3">
         {sortedSlides.map((slide) => (

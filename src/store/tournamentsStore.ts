@@ -26,9 +26,9 @@ interface TournamentsState {
   tournaments: Tournament[]
   loading: boolean
   fetchTournaments: () => Promise<void>
-  addTournament: (tournament: Omit<Tournament, 'id'>) => Promise<void>
-  updateTournament: (id: string, patch: Partial<Omit<Tournament, 'id'>>) => Promise<void>
-  deleteTournament: (id: string) => Promise<void>
+  addTournament: (tournament: Omit<Tournament, 'id'>) => Promise<string | null>
+  updateTournament: (id: string, patch: Partial<Omit<Tournament, 'id'>>) => Promise<string | null>
+  deleteTournament: (id: string) => Promise<string | null>
 }
 
 export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
@@ -52,7 +52,9 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
       })
       .select()
       .single()
-    if (!error && data) set({ tournaments: [...get().tournaments, fromRow(data)] })
+    if (error) return error.message
+    set({ tournaments: [...get().tournaments, fromRow(data)] })
+    return null
   },
   updateTournament: async (id, patch) => {
     const row: Partial<TournamentRow> = {}
@@ -63,14 +65,16 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
     if (patch.published !== undefined) row.published = patch.published
 
     const { error } = await supabase.from('tournaments').update(row).eq('id', id)
-    if (!error) {
-      set({
-        tournaments: get().tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-      })
-    }
+    if (error) return error.message
+    set({
+      tournaments: get().tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    })
+    return null
   },
   deleteTournament: async (id) => {
     const { error } = await supabase.from('tournaments').delete().eq('id', id)
-    if (!error) set({ tournaments: get().tournaments.filter((t) => t.id !== id) })
+    if (error) return error.message
+    set({ tournaments: get().tournaments.filter((t) => t.id !== id) })
+    return null
   },
 }))

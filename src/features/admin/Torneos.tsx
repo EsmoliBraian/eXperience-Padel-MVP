@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { todayKey } from '@/lib/format'
+import { ErrorText } from '@/components/ErrorText'
 import type { Tournament } from '@/types'
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
@@ -11,14 +12,23 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   const [date, setDate] = useState(tournament.date)
   const [description, setDescription] = useState(tournament.description)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const dirty =
     name !== tournament.name || date !== tournament.date || description !== tournament.description
 
   async function handleSave() {
     setSaving(true)
-    await updateTournament(tournament.id, { name, date, description })
+    setError(await updateTournament(tournament.id, { name, date, description }))
     setSaving(false)
+  }
+
+  async function handlePublishToggle() {
+    setError(await updateTournament(tournament.id, { published: !tournament.published }))
+  }
+
+  async function handleDelete() {
+    setError(await deleteTournament(tournament.id))
   }
 
   return (
@@ -33,7 +43,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </span>
         <button
           type="button"
-          onClick={() => updateTournament(tournament.id, { published: !tournament.published })}
+          onClick={handlePublishToggle}
           className="text-xs text-primary-500 hover:underline"
         >
           {tournament.published ? 'Despublicar' : 'Publicar'}
@@ -69,10 +79,12 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </label>
       </div>
 
+      <ErrorText error={error} />
+
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => deleteTournament(tournament.id)}
+          onClick={handleDelete}
           className="text-xs text-danger hover:underline"
         >
           Eliminar torneo
@@ -93,8 +105,20 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 export function Torneos() {
   const tournaments = useTournamentsStore((s) => s.tournaments)
   const addTournament = useTournamentsStore((s) => s.addTournament)
+  const [error, setError] = useState<string | null>(null)
 
   const sortedTournaments = [...tournaments].sort((a, b) => a.date.localeCompare(b.date))
+
+  async function handleAdd() {
+    setError(
+      await addTournament({
+        name: 'Nuevo torneo',
+        date: todayKey(),
+        description: '',
+        published: false,
+      }),
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -102,19 +126,14 @@ export function Torneos() {
         <h1 className="text-xl font-semibold text-gray-50">Torneos</h1>
         <button
           type="button"
-          onClick={() =>
-            addTournament({
-              name: 'Nuevo torneo',
-              date: todayKey(),
-              description: '',
-              published: false,
-            })
-          }
+          onClick={handleAdd}
           className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
         >
           + Nuevo torneo
         </button>
       </div>
+
+      <ErrorText error={error} />
 
       <div className="space-y-3">
         {sortedTournaments.map((t) => (

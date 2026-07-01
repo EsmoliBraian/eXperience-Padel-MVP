@@ -3,6 +3,7 @@ import { useProductsStore } from '@/store/productsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { formatCurrency, todayKey } from '@/lib/format'
+import { ErrorText } from '@/components/ErrorText'
 import type { PaymentMethod, SalePayment } from '@/types'
 
 export function VentaRapidaCard() {
@@ -14,6 +15,8 @@ export function VentaRapidaCard() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [splitPayments, setSplitPayments] = useState<SalePayment[]>([])
   const [linkedReservationId, setLinkedReservationId] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const today = todayKey()
   const todayReservations = useMemo(
@@ -57,11 +60,22 @@ export function VentaRapidaCard() {
     const items = products
       .filter((p) => (quantities[p.id] ?? 0) > 0)
       .map((p) => ({ productId: p.id, qty: quantities[p.id], unitPrice: p.price }))
-    if (items.length === 0) return
+    if (items.length === 0) {
+      setError('Seleccioná al menos un producto.')
+      return
+    }
 
+    setConfirming(true)
     const payments = paymentMethod === 'mixto' ? splitPayments.filter((p) => p.amount > 0) : []
-    await addSale(items, paymentMethod, payments, linkedReservationId || undefined)
+    const saleError = await addSale(items, paymentMethod, payments, linkedReservationId || undefined)
+    setConfirming(false)
 
+    if (saleError) {
+      setError(saleError)
+      return
+    }
+
+    setError(null)
     setQuantities({})
     setSplitPayments([])
     setLinkedReservationId('')
@@ -180,12 +194,15 @@ export function VentaRapidaCard() {
         </div>
       )}
 
+      <ErrorText error={error} />
+
       <button
         type="button"
         onClick={handleConfirmSale}
-        className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+        disabled={confirming}
+        className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
       >
-        Confirmar venta
+        {confirming ? 'Confirmando...' : 'Confirmar venta'}
       </button>
     </div>
   )

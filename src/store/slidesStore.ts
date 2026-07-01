@@ -26,9 +26,9 @@ interface SlidesState {
   slides: HeroSlide[]
   loading: boolean
   fetchSlides: () => Promise<void>
-  addSlide: (slide: Omit<HeroSlide, 'id'>) => Promise<void>
-  updateSlide: (id: string, patch: Partial<Omit<HeroSlide, 'id'>>) => Promise<void>
-  deleteSlide: (id: string) => Promise<void>
+  addSlide: (slide: Omit<HeroSlide, 'id'>) => Promise<string | null>
+  updateSlide: (id: string, patch: Partial<Omit<HeroSlide, 'id'>>) => Promise<string | null>
+  deleteSlide: (id: string) => Promise<string | null>
 }
 
 export const useSlidesStore = create<SlidesState>()((set, get) => ({
@@ -52,7 +52,9 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
       })
       .select()
       .single()
-    if (!error && data) set({ slides: [...get().slides, fromRow(data)] })
+    if (error) return error.message
+    set({ slides: [...get().slides, fromRow(data)] })
+    return null
   },
   updateSlide: async (id, patch) => {
     const row: Partial<SlideRow> = {}
@@ -63,12 +65,14 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
     if (patch.published !== undefined) row.published = patch.published
 
     const { error } = await supabase.from('hero_slides').update(row).eq('id', id)
-    if (!error) {
-      set({ slides: get().slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) })
-    }
+    if (error) return error.message
+    set({ slides: get().slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) })
+    return null
   },
   deleteSlide: async (id) => {
     const { error } = await supabase.from('hero_slides').delete().eq('id', id)
-    if (!error) set({ slides: get().slides.filter((s) => s.id !== id) })
+    if (error) return error.message
+    set({ slides: get().slides.filter((s) => s.id !== id) })
+    return null
   },
 }))

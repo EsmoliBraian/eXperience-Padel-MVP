@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useProductsStore } from '@/store/productsStore'
+import { ErrorText } from '@/components/ErrorText'
 import type { Product } from '@/types'
 
 function ProductCard({ product }: { product: Product }) {
@@ -10,14 +11,19 @@ function ProductCard({ product }: { product: Product }) {
   const [description, setDescription] = useState(product.description)
   const [price, setPrice] = useState(product.price)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const dirty =
     name !== product.name || description !== product.description || price !== product.price
 
   async function handleSave() {
     setSaving(true)
-    await updateProduct(product.id, { name, description, price })
+    setError(await updateProduct(product.id, { name, description, price }))
     setSaving(false)
+  }
+
+  async function handleDelete() {
+    setError(await deleteProduct(product.id))
   }
 
   return (
@@ -51,10 +57,12 @@ function ProductCard({ product }: { product: Product }) {
         </label>
       </div>
 
+      <ErrorText error={error} />
+
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => deleteProduct(product.id)}
+          onClick={handleDelete}
           className="text-xs text-danger hover:underline"
         >
           Eliminar
@@ -75,6 +83,11 @@ function ProductCard({ product }: { product: Product }) {
 export function Productos() {
   const products = useProductsStore((s) => s.products)
   const addProduct = useProductsStore((s) => s.addProduct)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleAdd() {
+    setError(await addProduct({ name: 'Nuevo producto', description: '', price: 0 }))
+  }
 
   return (
     <div className="space-y-4">
@@ -82,12 +95,14 @@ export function Productos() {
         <h1 className="text-xl font-semibold text-gray-50">Productos</h1>
         <button
           type="button"
-          onClick={() => addProduct({ name: 'Nuevo producto', description: '', price: 0 })}
+          onClick={handleAdd}
           className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
         >
           + Nuevo producto
         </button>
       </div>
+
+      <ErrorText error={error} />
 
       <div className="space-y-3">
         {products.map((p) => (
