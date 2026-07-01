@@ -1,26 +1,36 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient'
 
 interface AdminAuthState {
+  session: Session | null
+  initialized: boolean
   isAuthenticated: boolean
-  login: (user: string, pass: string) => boolean
-  logout: () => void
+  init: () => void
+  login: (email: string, password: string) => Promise<string | null>
+  logout: () => Promise<void>
 }
 
-const ADMIN_USER = import.meta.env.VITE_ADMIN_USER ?? 'admin'
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? 'admin123'
-
-export const useAdminAuthStore = create<AdminAuthState>()(
-  persist(
-    (set) => ({
-      isAuthenticated: false,
-      login: (user, pass) => {
-        const ok = user === ADMIN_USER && pass === ADMIN_PASSWORD
-        if (ok) set({ isAuthenticated: true })
-        return ok
-      },
-      logout: () => set({ isAuthenticated: false }),
-    }),
-    { name: 'padel-admin-auth' },
-  ),
-)
+export const useAdminAuthStore = create<AdminAuthState>()((set) => ({
+  session: null,
+  initialized: false,
+  isAuthenticated: false,
+  init: () => {
+    supabase.auth.getSession().then(({ data }) => {
+      set({ session: data.session, isAuthenticated: !!data.session, initialized: true })
+    })
+    supabase.auth.onAuthStateChange((_event, session) => {
+      set({ session, isAuthenticated: !!session })
+    })
+  },
+  login: async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return error.message
+    set({ session: data.session, isAuthenticated: !!data.session })
+    return null
+  },
+  logout: async () => {
+    await supabase.auth.signOut()
+    set({ session: null, isAuthenticated: false })
+  },
+}))

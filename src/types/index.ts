@@ -10,7 +10,6 @@ export interface Settings {
   priceFullCourt: number
   openHour: number
   closeHour: number
-  courts: Court[]
 }
 
 export type ReservationStatus = 'reservado' | 'confirmado' | 'cancelado'

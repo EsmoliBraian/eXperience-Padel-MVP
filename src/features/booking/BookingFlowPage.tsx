@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { getAvailableSlots, type TimeSlot } from '@/lib/availability'
 import { formatCurrency, formatLongDate, fromDateKey, nextDays, toDateKey, weekdayShort } from '@/lib/format'
@@ -10,6 +11,7 @@ type Step = 'slot' | 'players' | 'confirm'
 
 export function BookingFlowPage() {
   const settings = useSettingsStore()
+  const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const addReservation = useReservationsStore((s) => s.addReservation)
 
@@ -20,8 +22,8 @@ export function BookingFlowPage() {
   const [players, setPlayers] = useState(4)
 
   const availableSlots = useMemo(
-    () => getAvailableSlots(settings, reservations, selectedDate),
-    [settings, reservations, selectedDate],
+    () => getAvailableSlots(settings, courts, reservations, selectedDate),
+    [settings, courts, reservations, selectedDate],
   )
 
   const total =
@@ -32,9 +34,9 @@ export function BookingFlowPage() {
     setStep('players')
   }
 
-  function handleConfirmReservation() {
+  async function handleConfirmReservation() {
     if (!selectedSlot) return
-    addReservation({
+    await addReservation({
       courtId: selectedSlot.court.id,
       date: selectedDate,
       time: selectedSlot.time,

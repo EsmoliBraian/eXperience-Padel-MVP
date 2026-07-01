@@ -13,8 +13,11 @@ import { Productos } from '@/features/admin/Productos'
 import { VentasDelDia } from '@/features/admin/VentasDelDia'
 import { Metricas } from '@/features/admin/Metricas'
 import { Configuracion } from '@/features/admin/Configuracion'
+import { useHydrateStores } from '@/lib/useHydrateStores'
 
 function App() {
+  useHydrateStores()
+
   return (
     <BrowserRouter>
       <Routes>

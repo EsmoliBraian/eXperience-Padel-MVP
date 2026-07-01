@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import type { ReservationStatus } from '@/types'
 import { todayKey } from '@/lib/format'
 
 export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
   const settings = useSettingsStore()
+  const courts = useCourtsStore((s) => s.courts)
   const addReservation = useReservationsStore((s) => s.addReservation)
 
   const hours = Array.from(
@@ -16,15 +18,15 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
 
   const [date, setDate] = useState(todayKey())
   const [time, setTime] = useState(`${String(hours[0]).padStart(2, '0')}:00`)
-  const [courtId, setCourtId] = useState(settings.courts[0]?.id ?? '')
+  const [courtId, setCourtId] = useState(courts[0]?.id ?? '')
   const [players, setPlayers] = useState(4)
   const [customerName, setCustomerName] = useState('')
   const [status, setStatus] = useState<ReservationStatus>('confirmado')
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!courtId) return
     const priceTotal = players === 4 ? settings.priceFullCourt : players * settings.pricePerPlayer
-    addReservation({
+    await addReservation({
       courtId,
       date,
       time,
@@ -75,7 +77,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
             onChange={(e) => setCourtId(e.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
           >
-            {settings.courts.map((c) => (
+            {courts.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>

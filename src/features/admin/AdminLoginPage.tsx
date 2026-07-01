@@ -6,18 +6,22 @@ export function AdminLoginPage() {
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated)
   const login = useAdminAuthStore((s) => s.login)
   const navigate = useNavigate()
-  const [user, setUser] = useState('')
+  const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   if (isAuthenticated) return <Navigate to="/admin" replace />
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (login(user, pass)) {
-      navigate('/admin')
+    setSubmitting(true)
+    const loginError = await login(email, pass)
+    setSubmitting(false)
+    if (loginError) {
+      setError(loginError)
     } else {
-      setError(true)
+      navigate('/admin')
     }
   }
 
@@ -30,10 +34,11 @@ export function AdminLoginPage() {
         <h1 className="mb-6 text-lg font-semibold text-gray-50">Panel de administracion</h1>
 
         <label className="mb-3 block text-sm text-gray-400">
-          Usuario
+          Email
           <input
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
@@ -48,13 +53,14 @@ export function AdminLoginPage() {
           />
         </label>
 
-        {error && <p className="mb-4 text-sm text-danger">Usuario o contrasena incorrectos.</p>}
+        {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-primary-500 py-2 font-medium text-gray-950 hover:bg-primary-400"
+          disabled={submitting}
+          className="w-full rounded-lg bg-primary-500 py-2 font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-60"
         >
-          Ingresar
+          {submitting ? 'Ingresando...' : 'Ingresar'}
         </button>
       </form>
     </div>

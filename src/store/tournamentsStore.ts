@@ -1,53 +1,72 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { supabase } from '@/lib/supabaseClient'
 import type { Tournament } from '@/types'
-import { generateId, nextDays, toDateKey } from '@/lib/format'
+
+interface TournamentRow {
+  id: string
+  name: string
+  date: string
+  description: string
+  image_url: string | null
+}
+
+function fromRow(row: TournamentRow): Tournament {
+  return {
+    id: row.id,
+    name: row.name,
+    date: row.date,
+    description: row.description,
+    imageUrl: row.image_url ?? undefined,
+  }
+}
 
 interface TournamentsState {
   tournaments: Tournament[]
-  addTournament: (tournament: Omit<Tournament, 'id'>) => void
-  updateTournament: (id: string, patch: Partial<Omit<Tournament, 'id'>>) => void
-  deleteTournament: (id: string) => void
+  loading: boolean
+  fetchTournaments: () => Promise<void>
+  addTournament: (tournament: Omit<Tournament, 'id'>) => Promise<void>
+  updateTournament: (id: string, patch: Partial<Omit<Tournament, 'id'>>) => Promise<void>
+  deleteTournament: (id: string) => Promise<void>
 }
 
-const days = nextDays(60)
+export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
+  tournaments: [],
+  loading: false,
+  fetchTournaments: async () => {
+    set({ loading: true })
+    const { data, error } = await supabase.from('tournaments').select('*').order('date')
+    if (!error && data) set({ tournaments: data.map(fromRow) })
+    set({ loading: false })
+  },
+  addTournament: async (tournament) => {
+    const { data, error } = await supabase
+      .from('tournaments')
+      .insert({
+        name: tournament.name,
+        date: tournament.date,
+        description: tournament.description,
+        image_url: tournament.imageUrl ?? null,
+      })
+      .select()
+      .single()
+    if (!error && data) set({ tournaments: [...get().tournaments, fromRow(data)] })
+  },
+  updateTournament: async (id, patch) => {
+    const row: Partial<TournamentRow> = {}
+    if (patch.name !== undefined) row.name = patch.name
+    if (patch.date !== undefined) row.date = patch.date
+    if (patch.description !== undefined) row.description = patch.description
+    if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl ?? null
 
-const initialTournaments: Tournament[] = [
-  {
-    id: generateId(),
-    name: 'Torneo Express',
-    date: toDateKey(days[4]),
-    description: 'Torneo relámpago de un día, formato eliminación directa.',
+    const { error } = await supabase.from('tournaments').update(row).eq('id', id)
+    if (!error) {
+      set({
+        tournaments: get().tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      })
+    }
   },
-  {
-    id: generateId(),
-    name: 'Torneo Nocturno',
-    date: toDateKey(days[10]),
-    description: 'Partidos bajo las luces, categorías mixtas.',
+  deleteTournament: async (id) => {
+    const { error } = await supabase.from('tournaments').delete().eq('id', id)
+    if (!error) set({ tournaments: get().tournaments.filter((t) => t.id !== id) })
   },
-  {
-    id: generateId(),
-    name: 'Torneo Aniversario',
-    date: toDateKey(days[18]),
-    description: 'Torneo especial por el aniversario del club, con premios.',
-  },
-]
-
-export const useTournamentsStore = create<TournamentsState>()(
-  persist(
-    (set) => ({
-      tournaments: initialTournaments,
-      addTournament: (tournament) =>
-        set((state) => ({
-          tournaments: [...state.tournaments, { ...tournament, id: generateId() }],
-        })),
-      updateTournament: (id, patch) =>
-        set((state) => ({
-          tournaments: state.tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-        })),
-      deleteTournament: (id) =>
-        set((state) => ({ tournaments: state.tournaments.filter((t) => t.id !== id) })),
-    }),
-    { name: 'padel-tournaments' },
-  ),
-)
+}))

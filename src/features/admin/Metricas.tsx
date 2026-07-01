@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useProductsStore } from '@/store/productsStore'
@@ -33,6 +34,7 @@ const OCCUPANCY_COLORS = ['#15F5BA', '#363636']
 
 export function Metricas() {
   const settings = useSettingsStore()
+  const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
   const products = useProductsStore((s) => s.products)
@@ -56,13 +58,13 @@ export function Metricas() {
 
   const today = toDateKey(new Date())
   const occupancyData = useMemo(() => {
-    const totalSlots = settings.courts.length * (settings.closeHour - settings.openHour)
+    const totalSlots = courts.length * (settings.closeHour - settings.openHour)
     const bookedSlots = reservations.filter(
       (r) => r.date === today && r.status !== 'cancelado',
     ).length
     const pct = totalSlots === 0 ? 0 : Math.round((bookedSlots / totalSlots) * 100)
     return { pct, data: [{ name: 'Ocupado', value: pct }, { name: 'Libre', value: 100 - pct }] }
-  }, [settings, reservations, today])
+  }, [settings, courts, reservations, today])
 
   const topProducts = useMemo(() => {
     const qtyByProduct = new Map<string, number>()

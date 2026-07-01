@@ -1,38 +1,70 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { supabase } from '@/lib/supabaseClient'
 import type { HeroSlide } from '@/types'
-import { generateId } from '@/lib/format'
+
+interface SlideRow {
+  id: string
+  image_url: string
+  title: string
+  subtitle: string
+  order: number
+}
+
+function fromRow(row: SlideRow): HeroSlide {
+  return {
+    id: row.id,
+    imageUrl: row.image_url,
+    title: row.title,
+    subtitle: row.subtitle,
+    order: row.order,
+  }
+}
 
 interface SlidesState {
   slides: HeroSlide[]
-  addSlide: (slide: Omit<HeroSlide, 'id'>) => void
-  updateSlide: (id: string, patch: Partial<Omit<HeroSlide, 'id'>>) => void
-  deleteSlide: (id: string) => void
+  loading: boolean
+  fetchSlides: () => Promise<void>
+  addSlide: (slide: Omit<HeroSlide, 'id'>) => Promise<void>
+  updateSlide: (id: string, patch: Partial<Omit<HeroSlide, 'id'>>) => Promise<void>
+  deleteSlide: (id: string) => Promise<void>
 }
 
-const initialSlides: HeroSlide[] = [
-  {
-    id: generateId(),
-    imageUrl: '',
-    title: 'Tu mejor partido empieza acá',
-    subtitle: 'Reservá tu turno fácil y rápido',
-    order: 0,
+export const useSlidesStore = create<SlidesState>()((set, get) => ({
+  slides: [],
+  loading: false,
+  fetchSlides: async () => {
+    set({ loading: true })
+    const { data, error } = await supabase.from('hero_slides').select('*').order('order')
+    if (!error && data) set({ slides: data.map(fromRow) })
+    set({ loading: false })
   },
-]
+  addSlide: async (slide) => {
+    const { data, error } = await supabase
+      .from('hero_slides')
+      .insert({
+        image_url: slide.imageUrl,
+        title: slide.title,
+        subtitle: slide.subtitle,
+        order: slide.order,
+      })
+      .select()
+      .single()
+    if (!error && data) set({ slides: [...get().slides, fromRow(data)] })
+  },
+  updateSlide: async (id, patch) => {
+    const row: Partial<SlideRow> = {}
+    if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl
+    if (patch.title !== undefined) row.title = patch.title
+    if (patch.subtitle !== undefined) row.subtitle = patch.subtitle
+    if (patch.order !== undefined) row.order = patch.order
 
-export const useSlidesStore = create<SlidesState>()(
-  persist(
-    (set) => ({
-      slides: initialSlides,
-      addSlide: (slide) =>
-        set((state) => ({ slides: [...state.slides, { ...slide, id: generateId() }] })),
-      updateSlide: (id, patch) =>
-        set((state) => ({
-          slides: state.slides.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-        })),
-      deleteSlide: (id) =>
-        set((state) => ({ slides: state.slides.filter((s) => s.id !== id) })),
-    }),
-    { name: 'padel-slides' },
-  ),
-)
+    const { error } = await supabase.from('hero_slides').update(row).eq('id', id)
+    if (!error) {
+      set({ slides: get().slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) })
+    }
+  },
+  deleteSlide: async (id) => {
+    const { error } = await supabase.from('hero_slides').delete().eq('id', id)
+    if (!error) set({ slides: get().slides.filter((s) => s.id !== id) })
+  },
+}))

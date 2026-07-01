@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { useSettingsStore } from '@/store/settingsStore'
+import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { StatusBadge } from '@/components/StatusBadge'
 import { formatCurrency, todayKey } from '@/lib/format'
 import type { ReservationStatus } from '@/types'
 
 export function Reservas() {
-  const settings = useSettingsStore()
+  const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const updateStatus = useReservationsStore((s) => s.updateStatus)
   const deleteReservation = useReservationsStore((s) => s.deleteReservation)
@@ -24,7 +24,7 @@ export function Reservas() {
   )
 
   function courtName(courtId: string) {
-    return settings.courts.find((c) => c.id === courtId)?.name ?? courtId
+    return courts.find((c) => c.id === courtId)?.name ?? courtId
   }
 
   return (
@@ -44,7 +44,7 @@ export function Reservas() {
           className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100"
         >
           <option value="all">Todas las canchas</option>
-          {settings.courts.map((c) => (
+          {courts.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>

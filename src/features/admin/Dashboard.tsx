@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
@@ -13,6 +14,7 @@ import type { PaymentMethod } from '@/types'
 
 export function Dashboard() {
   const settings = useSettingsStore()
+  const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
   const addSale = useSalesStore((s) => s.addSale)
@@ -37,7 +39,7 @@ export function Dashboard() {
     (sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + item.qty, 0),
     0,
   )
-  const turnosDisponiblesHoy = getAvailableSlots(settings, reservations, today).length
+  const turnosDisponiblesHoy = getAvailableSlots(settings, courts, reservations, today).length
 
   const hours = Array.from(
     { length: settings.closeHour - settings.openHour },
@@ -56,12 +58,12 @@ export function Dashboard() {
     }))
   }
 
-  function handleConfirmSale() {
+  async function handleConfirmSale() {
     const items = products
       .filter((p) => (quantities[p.id] ?? 0) > 0)
       .map((p) => ({ productId: p.id, qty: quantities[p.id], unitPrice: p.price }))
     if (items.length === 0) return
-    addSale(items, paymentMethod)
+    await addSale(items, paymentMethod)
     setQuantities({})
   }
 
@@ -92,7 +94,7 @@ export function Dashboard() {
             <thead>
               <tr className="text-left text-gray-500">
                 <th className="pb-2 pr-2">Hora</th>
-                {settings.courts.map((c) => (
+                {courts.map((c) => (
                   <th key={c.id} className="pb-2 pr-2">
                     {c.name}
                   </th>
@@ -105,7 +107,7 @@ export function Dashboard() {
                 return (
                   <tr key={time} className="border-t border-gray-800">
                     <td className="py-2 pr-2 text-gray-500">{time}</td>
-                    {settings.courts.map((court) => {
+                    {courts.map((court) => {
                       const reservation = todayReservations.find(
                         (r) => r.courtId === court.id && r.time === time,
                       )

@@ -61,7 +61,3 @@ export function nextDays(count: number, from: Date = new Date()): Date[] {
     return d
   })
 }
-
-export function generateId(): string {
-  return crypto.randomUUID()
-}

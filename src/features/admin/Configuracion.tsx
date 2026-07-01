@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { useSettingsStore } from '@/store/settingsStore'
-import { generateId } from '@/lib/format'
+import { useCourtsStore } from '@/store/courtsStore'
 
 export function Configuracion() {
   const settings = useSettingsStore()
   const updateSettings = useSettingsStore((s) => s.updateSettings)
+  const courts = useCourtsStore((s) => s.courts)
+  const addCourt = useCourtsStore((s) => s.addCourt)
+  const updateCourt = useCourtsStore((s) => s.updateCourt)
+  const deleteCourt = useCourtsStore((s) => s.deleteCourt)
 
   const [venueName, setVenueName] = useState(settings.venueName)
   const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone)
   const [pricePerPlayer, setPricePerPlayer] = useState(settings.pricePerPlayer)
   const [priceFullCourt, setPriceFullCourt] = useState(settings.priceFullCourt)
-  const [courts, setCourts] = useState(settings.courts)
   const [saved, setSaved] = useState(false)
 
-  function handleSave() {
-    updateSettings({ venueName, whatsappPhone, pricePerPlayer, priceFullCourt, courts })
+  async function handleSave() {
+    await updateSettings({ venueName, whatsappPhone, pricePerPlayer, priceFullCourt })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -70,31 +73,30 @@ export function Configuracion() {
           <p className="text-sm font-medium text-gray-300">Canchas</p>
           <button
             type="button"
-            onClick={() => setCourts([...courts, { id: generateId(), name: `Cancha ${courts.length + 1}` }])}
+            onClick={() => addCourt(`Cancha ${courts.length + 1}`)}
             className="text-xs text-primary-500 hover:underline"
           >
             + Agregar cancha
           </button>
         </div>
 
-        {courts.map((court, i) => (
+        {courts.map((court) => (
           <div key={court.id} className="flex items-center gap-2">
             <input
               value={court.name}
-              onChange={(e) =>
-                setCourts(courts.map((c, idx) => (idx === i ? { ...c, name: e.target.value } : c)))
-              }
+              onChange={(e) => updateCourt(court.id, e.target.value)}
               className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
             />
             <button
               type="button"
-              onClick={() => setCourts(courts.filter((_, idx) => idx !== i))}
+              onClick={() => deleteCourt(court.id)}
               className="text-xs text-danger hover:underline"
             >
               Eliminar
             </button>
           </div>
         ))}
+        {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
       </div>
 
       <button

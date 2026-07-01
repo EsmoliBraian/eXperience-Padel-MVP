@@ -7,6 +7,7 @@ export interface TimeSlot {
 
 export function getAvailableSlots(
   settings: Settings,
+  courts: Court[],
   reservations: Reservation[],
   date: string,
 ): TimeSlot[] {
@@ -20,7 +21,7 @@ export function getAvailableSlots(
     const takenCourtIds = new Set(
       dayReservations.filter((r) => r.time === time).map((r) => r.courtId),
     )
-    const court = settings.courts.find((c) => !takenCourtIds.has(c.id))
+    const court = courts.find((c) => !takenCourtIds.has(c.id))
     if (court) slots.push({ time, court })
   }
   return slots

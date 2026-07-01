@@ -1,100 +1,78 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { supabase } from '@/lib/supabaseClient'
 import type { Reservation, ReservationStatus } from '@/types'
-import { generateId, toDateKey } from '@/lib/format'
+
+interface ReservationRow {
+  id: string
+  court_id: string
+  date: string
+  time: string
+  players: number
+  status: ReservationStatus
+  customer_name: string | null
+  created_via: 'user' | 'admin'
+  price_total: number
+}
+
+function fromRow(row: ReservationRow): Reservation {
+  return {
+    id: row.id,
+    courtId: row.court_id,
+    date: row.date,
+    time: row.time,
+    players: row.players,
+    status: row.status,
+    customerName: row.customer_name ?? undefined,
+    createdVia: row.created_via,
+    priceTotal: row.price_total,
+  }
+}
 
 interface ReservationsState {
   reservations: Reservation[]
-  addReservation: (reservation: Omit<Reservation, 'id'>) => void
-  updateStatus: (id: string, status: ReservationStatus) => void
-  deleteReservation: (id: string) => void
+  loading: boolean
+  fetchReservations: () => Promise<void>
+  addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>
+  updateStatus: (id: string, status: ReservationStatus) => Promise<void>
+  deleteReservation: (id: string) => Promise<void>
 }
 
-const SEED_COURT_IDS = ['c1', 'c2', 'c3', 'c4']
-const SEED_CUSTOMER_NAMES = ['Juan S.', 'Pablo R.', 'Matias G.', 'Lucia F.', 'Carla M.', 'Diego P.']
-const SEED_FULL_COURT_PRICE = 8000
-
-function dateKeyDaysAgo(daysAgo: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  return toDateKey(d)
-}
-
-function buildSeedReservations(): Reservation[] {
-  const reservations: Reservation[] = []
-  let nameIndex = 0
-
-  const today = dateKeyDaysAgo(0)
-  for (let hour = 9; hour <= 20; hour++) {
-    const time = `${String(hour).padStart(2, '0')}:00`
-    const courtA = SEED_COURT_IDS[hour % SEED_COURT_IDS.length]
-    const courtB = SEED_COURT_IDS[(hour + 2) % SEED_COURT_IDS.length]
-
-    reservations.push({
-      id: generateId(),
-      courtId: courtA,
-      date: today,
-      time,
-      players: 4,
-      status: 'reservado',
-      customerName: SEED_CUSTOMER_NAMES[nameIndex++ % SEED_CUSTOMER_NAMES.length],
-      createdVia: 'admin',
-      priceTotal: SEED_FULL_COURT_PRICE,
-    })
-    reservations.push({
-      id: generateId(),
-      courtId: courtB,
-      date: today,
-      time,
-      players: 4,
-      status: 'confirmado',
-      customerName: SEED_CUSTOMER_NAMES[nameIndex++ % SEED_CUSTOMER_NAMES.length],
-      createdVia: 'admin',
-      priceTotal: SEED_FULL_COURT_PRICE,
-    })
-  }
-
-  // Light historical seed for the last 6 days so the 7-day revenue chart has data.
-  for (let daysAgo = 1; daysAgo <= 6; daysAgo++) {
-    const date = dateKeyDaysAgo(daysAgo)
-    const hours = [10, 12, 14, 16, 18, 20]
-    for (const hour of hours) {
-      const time = `${String(hour).padStart(2, '0')}:00`
-      const court = SEED_COURT_IDS[(hour + daysAgo) % SEED_COURT_IDS.length]
-      reservations.push({
-        id: generateId(),
-        courtId: court,
-        date,
-        time,
-        players: 4,
-        status: 'confirmado',
-        customerName: SEED_CUSTOMER_NAMES[nameIndex++ % SEED_CUSTOMER_NAMES.length],
-        createdVia: 'admin',
-        priceTotal: SEED_FULL_COURT_PRICE,
+export const useReservationsStore = create<ReservationsState>()((set, get) => ({
+  reservations: [],
+  loading: false,
+  fetchReservations: async () => {
+    set({ loading: true })
+    const { data, error } = await supabase.from('reservations').select('*').order('date').order('time')
+    if (!error && data) set({ reservations: data.map(fromRow) })
+    set({ loading: false })
+  },
+  addReservation: async (reservation) => {
+    const { data, error } = await supabase
+      .from('reservations')
+      .insert({
+        court_id: reservation.courtId,
+        date: reservation.date,
+        time: reservation.time,
+        players: reservation.players,
+        status: reservation.status,
+        customer_name: reservation.customerName ?? null,
+        created_via: reservation.createdVia,
+        price_total: reservation.priceTotal,
+      })
+      .select()
+      .single()
+    if (!error && data) set({ reservations: [...get().reservations, fromRow(data)] })
+  },
+  updateStatus: async (id, status) => {
+    const { error } = await supabase.from('reservations').update({ status }).eq('id', id)
+    if (!error) {
+      set({
+        reservations: get().reservations.map((r) => (r.id === id ? { ...r, status } : r)),
       })
     }
-  }
-
-  return reservations
-}
-
-export const useReservationsStore = create<ReservationsState>()(
-  persist(
-    (set) => ({
-      reservations: buildSeedReservations(),
-      addReservation: (reservation) =>
-        set((state) => ({
-          reservations: [...state.reservations, { ...reservation, id: generateId() }],
-        })),
-      updateStatus: (id, status) =>
-        set((state) => ({
-          reservations: state.reservations.map((r) => (r.id === id ? { ...r, status } : r)),
-        })),
-      deleteReservation: (id) =>
-        set((state) => ({
-          reservations: state.reservations.filter((r) => r.id !== id),
-        })),
-    }),
-    { name: 'padel-reservations' },
-  ),
-)
+  },
+  deleteReservation: async (id) => {
+    const { error } = await supabase.from('reservations').delete().eq('id', id)
+    if (!error) set({ reservations: get().reservations.filter((r) => r.id !== id) })
+  },
+}))
