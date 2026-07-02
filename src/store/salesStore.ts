@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
-import type { PaymentMethod, Sale, SaleItem, SalePayment } from '@/types'
+import type { PaymentMethod, PaymentStatus, Sale, SaleItem, SalePayment } from '@/types'
 import { toDateKey } from '@/lib/format'
 
 interface SaleItemRow {
@@ -18,7 +18,9 @@ interface SaleRow {
   id: string
   date: string
   total: number
-  payment_method: PaymentMethod
+  payment_method: PaymentMethod | null
+  payment_status: PaymentStatus
+  customer_name: string | null
   reservation_id: string | null
   sale_items: SaleItemRow[]
   sale_payments: SalePaymentRow[]
@@ -30,6 +32,8 @@ function fromRow(row: SaleRow): Sale {
     date: row.date,
     total: row.total,
     paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    customerName: row.customer_name ?? undefined,
     reservationId: row.reservation_id ?? undefined,
     items: row.sale_items.map((item) => ({
       productId: item.product_id,
@@ -46,9 +50,15 @@ interface SalesState {
   fetchSales: () => Promise<void>
   addSale: (
     items: SaleItem[],
-    paymentMethod: PaymentMethod,
+    paymentMethod: PaymentMethod | null,
     payments: SalePayment[],
     reservationId?: string,
+    customerName?: string,
+  ) => Promise<string | null>
+  settleSale: (
+    id: string,
+    paymentMethod: PaymentMethod,
+    payments: SalePayment[],
   ) => Promise<string | null>
 }
 
@@ -64,9 +74,10 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
     if (!error && data) set({ sales: data.map(fromRow) })
     set({ loading: false })
   },
-  addSale: async (items, paymentMethod, payments, reservationId) => {
+  addSale: async (items, paymentMethod, payments, reservationId, customerName) => {
     const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
     const date = toDateKey(new Date())
+    const paymentStatus: PaymentStatus = paymentMethod ? 'pagado' : 'adeuda'
 
     const { data: sale, error: saleError } = await supabase
       .from('sales')
@@ -74,6 +85,8 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
         date,
         total,
         payment_method: paymentMethod,
+        payment_status: paymentStatus,
+        customer_name: customerName ?? null,
         reservation_id: reservationId ?? null,
       })
       .select()
@@ -105,11 +118,41 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
           date,
           total,
           paymentMethod,
+          paymentStatus,
+          customerName,
           reservationId,
           items,
           payments: paymentMethod === 'mixto' ? payments : [],
         },
       ],
+    })
+    return null
+  },
+  settleSale: async (id, paymentMethod, payments) => {
+    const { error } = await supabase
+      .from('sales')
+      .update({ payment_status: 'pagado', payment_method: paymentMethod })
+      .eq('id', id)
+    if (error) return error.message
+
+    if (paymentMethod === 'mixto' && payments.length > 0) {
+      const { error: paymentsError } = await supabase.from('sale_payments').insert(
+        payments.map((p) => ({ sale_id: id, method: p.method, amount: p.amount })),
+      )
+      if (paymentsError) return paymentsError.message
+    }
+
+    set({
+      sales: get().sales.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              paymentStatus: 'pagado',
+              paymentMethod,
+              payments: paymentMethod === 'mixto' ? payments : [],
+            }
+          : s,
+      ),
     })
     return null
   },

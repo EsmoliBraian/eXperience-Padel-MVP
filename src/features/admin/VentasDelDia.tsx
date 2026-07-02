@@ -17,17 +17,20 @@ export function VentasDelDia() {
   const reservations = useReservationsStore((s) => s.reservations)
 
   const today = todayKey()
-  const todaySales = useMemo(
-    () => sales.filter((s) => s.date === today),
-    [sales, today],
+  const todaySales = useMemo(() => sales.filter((s) => s.date === today), [sales, today])
+  const paidSales = useMemo(
+    () => todaySales.filter((s) => s.paymentStatus === 'pagado'),
+    [todaySales],
   )
 
-  const total = todaySales.reduce((sum, s) => sum + s.total, 0)
+  const total = paidSales.reduce((sum, s) => sum + s.total, 0)
   const totalsByMethod = useMemo(() => {
     const map: Record<PaymentMethod, number> = { efectivo: 0, transferencia: 0, mixto: 0 }
-    for (const s of todaySales) map[s.paymentMethod] += s.total
+    for (const s of paidSales) {
+      if (s.paymentMethod) map[s.paymentMethod] += s.total
+    }
     return map
-  }, [todaySales])
+  }, [paidSales])
 
   function productName(productId: string) {
     return products.find((p) => p.id === productId)?.name ?? productId
@@ -64,6 +67,7 @@ export function VentasDelDia() {
             <tr className="border-b border-gray-800 text-left text-gray-500">
               <th className="p-3">Productos</th>
               <th className="p-3">Turno</th>
+              <th className="p-3">Estado</th>
               <th className="p-3">Metodo de pago</th>
               <th className="p-3">Total</th>
             </tr>
@@ -75,8 +79,19 @@ export function VentasDelDia() {
                   {sale.items.map((item) => `${item.qty}x ${productName(item.productId)}`).join(', ')}
                 </td>
                 <td className="p-3 text-gray-300">{linkedTurno(sale.reservationId) ?? '-'}</td>
+                <td className="p-3">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      sale.paymentStatus === 'pagado'
+                        ? 'bg-success/20 text-success'
+                        : 'bg-warning/20 text-warning'
+                    }`}
+                  >
+                    {sale.paymentStatus === 'pagado' ? 'Pagado' : `Adeuda${sale.customerName ? ` - ${sale.customerName}` : ''}`}
+                  </span>
+                </td>
                 <td className="p-3 text-gray-300">
-                  {PAYMENT_LABELS[sale.paymentMethod]}
+                  {sale.paymentMethod ? PAYMENT_LABELS[sale.paymentMethod] : '-'}
                   {sale.paymentMethod === 'mixto' && sale.payments.length > 0 && (
                     <ul className="mt-1 text-xs text-gray-500">
                       {sale.payments.map((p, i) => (
@@ -92,7 +107,7 @@ export function VentasDelDia() {
             ))}
             {todaySales.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
+                <td colSpan={5} className="p-4 text-center text-gray-500">
                   Todavia no hay ventas hoy.
                 </td>
               </tr>

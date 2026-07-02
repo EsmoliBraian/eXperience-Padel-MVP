@@ -4,15 +4,15 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/reservas', label: 'Reservas' },
-  { to: '/admin/horarios', label: 'Horarios' },
-  { to: '/admin/slides', label: 'Slides / Hero' },
-  { to: '/admin/torneos', label: 'Torneos' },
-  { to: '/admin/productos', label: 'Productos' },
-  { to: '/admin/ventas', label: 'Ventas del dia' },
-  { to: '/admin/metricas', label: 'Metricas' },
-  { to: '/admin/configuracion', label: 'Configuracion' },
+  { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge' },
+  { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check' },
+  { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock' },
+  { to: '/admin/slides', label: 'Slides / Hero', icon: 'fa-images' },
+  { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy' },
+  { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping' },
+  { to: '/admin/ventas', label: 'Ventas del dia', icon: 'fa-cash-register' },
+  { to: '/admin/metricas', label: 'Metricas', icon: 'fa-chart-line' },
+  { to: '/admin/configuracion', label: 'Configuracion', icon: 'fa-gear' },
 ]
 
 export function Sidebar() {
@@ -35,13 +35,14 @@ export function Sidebar() {
             end={item.end}
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
-              `block rounded-lg px-3 py-2 text-sm transition-colors ${
+              `flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                 isActive
                   ? 'bg-primary-500/10 text-primary-500'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
               }`
             }
           >
+            <i className={`fa-solid ${item.icon} w-4 text-center`} />
             {item.label}
           </NavLink>
         ))}

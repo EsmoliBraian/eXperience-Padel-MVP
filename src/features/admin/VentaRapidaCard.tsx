@@ -4,16 +4,28 @@ import { useSalesStore } from '@/store/salesStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { formatCurrency, todayKey } from '@/lib/format'
 import { ErrorText } from '@/components/ErrorText'
+import { PaymentBreakdown } from '@/components/admin/PaymentBreakdown'
 import type { PaymentMethod, SalePayment } from '@/types'
+
+type SaleMode = PaymentMethod | 'adeuda'
+
+const MODE_LABELS: Record<SaleMode, string> = {
+  efectivo: 'Efectivo',
+  transferencia: 'Transferencia',
+  mixto: 'Mixto',
+  adeuda: 'Adeuda',
+}
 
 export function VentaRapidaCard() {
   const products = useProductsStore((s) => s.products)
   const addSale = useSalesStore((s) => s.addSale)
   const reservations = useReservationsStore((s) => s.reservations)
 
+  const [searchQuery, setSearchQuery] = useState('')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
+  const [mode, setMode] = useState<SaleMode>('efectivo')
   const [splitPayments, setSplitPayments] = useState<SalePayment[]>([])
+  const [debtorName, setDebtorName] = useState('')
   const [linkedReservationId, setLinkedReservationId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -27,8 +39,19 @@ export function VentaRapidaCard() {
     [reservations, today],
   )
 
-  const cartTotal = products.reduce((sum, p) => sum + (quantities[p.id] ?? 0) * p.price, 0)
-  const splitTotal = splitPayments.reduce((sum, p) => sum + p.amount, 0)
+  const searchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.trim().toLowerCase()
+    return products.filter((p) => p.name.toLowerCase().includes(q))
+  }, [products, searchQuery])
+
+  const cartProducts = products.filter((p) => (quantities[p.id] ?? 0) > 0)
+  const cartTotal = cartProducts.reduce((sum, p) => sum + quantities[p.id] * p.price, 0)
+
+  function handleAddProduct(productId: string) {
+    setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
+    setSearchQuery('')
+  }
 
   function handleQtyChange(productId: string, delta: number) {
     setQuantities((prev) => ({
@@ -37,37 +60,34 @@ export function VentaRapidaCard() {
     }))
   }
 
-  function handleSelectPaymentMethod(method: PaymentMethod) {
-    setPaymentMethod(method)
-    if (method === 'mixto' && splitPayments.length === 0) {
+  function handleSelectMode(next: SaleMode) {
+    setMode(next)
+    if (next === 'mixto' && splitPayments.length === 0) {
       setSplitPayments([{ method: 'efectivo', amount: 0 }])
     }
   }
 
-  function updateSplitPayment(index: number, patch: Partial<SalePayment>) {
-    setSplitPayments((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
-  }
-
-  function addSplitPayment() {
-    setSplitPayments((prev) => [...prev, { method: 'efectivo', amount: 0 }])
-  }
-
-  function removeSplitPayment(index: number) {
-    setSplitPayments((prev) => prev.filter((_, i) => i !== index))
-  }
-
   async function handleConfirmSale() {
-    const items = products
-      .filter((p) => (quantities[p.id] ?? 0) > 0)
-      .map((p) => ({ productId: p.id, qty: quantities[p.id], unitPrice: p.price }))
+    const items = cartProducts.map((p) => ({
+      productId: p.id,
+      qty: quantities[p.id],
+      unitPrice: p.price,
+    }))
     if (items.length === 0) {
       setError('Seleccioná al menos un producto.')
       return
     }
+    if (mode === 'adeuda' && !debtorName.trim()) {
+      setError('Ingresá el nombre del deudor.')
+      return
+    }
 
     setConfirming(true)
-    const payments = paymentMethod === 'mixto' ? splitPayments.filter((p) => p.amount > 0) : []
-    const saleError = await addSale(items, paymentMethod, payments, linkedReservationId || undefined)
+    const payments = mode === 'mixto' ? splitPayments.filter((p) => p.amount > 0) : []
+    const saleError =
+      mode === 'adeuda'
+        ? await addSale(items, null, [], linkedReservationId || undefined, debtorName.trim())
+        : await addSale(items, mode, payments, linkedReservationId || undefined)
     setConfirming(false)
 
     if (saleError) {
@@ -78,15 +98,41 @@ export function VentaRapidaCard() {
     setError(null)
     setQuantities({})
     setSplitPayments([])
+    setDebtorName('')
     setLinkedReservationId('')
-    setPaymentMethod('efectivo')
+    setMode('efectivo')
   }
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
       <p className="mb-3 text-sm font-medium text-gray-300">Venta rapida</p>
-      <div className="space-y-2">
-        {products.map((p) => (
+
+      <div className="relative">
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar producto..."
+          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+        />
+        {searchMatches.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 shadow-lg">
+            {searchMatches.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => handleAddProduct(p.id)}
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
+              >
+                <span>{p.name}</span>
+                <span className="text-gray-500">{formatCurrency(p.price)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {cartProducts.map((p) => (
           <div key={p.id} className="flex items-center justify-between text-sm">
             <span className="text-gray-300">
               {p.name} <span className="text-gray-500">{formatCurrency(p.price)}</span>
@@ -99,7 +145,7 @@ export function VentaRapidaCard() {
               >
                 -
               </button>
-              <span className="w-4 text-center text-gray-100">{quantities[p.id] ?? 0}</span>
+              <span className="w-4 text-center text-gray-100">{quantities[p.id]}</span>
               <button
                 type="button"
                 onClick={() => handleQtyChange(p.id, 1)}
@@ -110,7 +156,9 @@ export function VentaRapidaCard() {
             </div>
           </div>
         ))}
-        {products.length === 0 && <p className="text-sm text-gray-500">No hay productos cargados.</p>}
+        {cartProducts.length === 0 && (
+          <p className="text-sm text-gray-500">Busca un producto para agregarlo.</p>
+        )}
       </div>
 
       <label className="mt-3 block text-xs text-gray-400">
@@ -134,64 +182,39 @@ export function VentaRapidaCard() {
         <span className="font-semibold text-gray-50">{formatCurrency(cartTotal)}</span>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {(['efectivo', 'transferencia', 'mixto'] as PaymentMethod[]).map((method) => (
+      <div className="mt-3 grid grid-cols-4 gap-2">
+        {(['efectivo', 'transferencia', 'mixto', 'adeuda'] as SaleMode[]).map((m) => (
           <button
-            key={method}
+            key={m}
             type="button"
-            onClick={() => handleSelectPaymentMethod(method)}
-            className={`rounded-lg border py-1.5 text-xs capitalize ${
-              paymentMethod === method
+            onClick={() => handleSelectMode(m)}
+            className={`rounded-lg border py-1.5 text-xs ${
+              mode === m
                 ? 'border-primary-500 bg-primary-500/10 text-primary-500'
                 : 'border-gray-800 text-gray-400'
             }`}
           >
-            {method}
+            {MODE_LABELS[m]}
           </button>
         ))}
       </div>
 
-      {paymentMethod === 'mixto' && (
-        <div className="mt-3 space-y-2 rounded-lg border border-gray-800 p-3">
-          {splitPayments.map((p, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                type="number"
-                value={p.amount}
-                onChange={(e) => updateSplitPayment(i, { amount: Number(e.target.value) })}
-                placeholder="Monto"
-                className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
-              />
-              <select
-                value={p.method}
-                onChange={(e) =>
-                  updateSplitPayment(i, { method: e.target.value as SalePayment['method'] })
-                }
-                className="rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
-              >
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => removeSplitPayment(i)}
-                className="text-xs text-danger hover:underline"
-              >
-                Quitar
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addSplitPayment}
-            className="text-xs text-primary-500 hover:underline"
-          >
-            + Agregar otro pago
-          </button>
-          <p className="text-xs text-gray-500">
-            Cargado: {formatCurrency(splitTotal)} de {formatCurrency(cartTotal)}
-          </p>
+      {mode === 'mixto' && (
+        <div className="mt-3">
+          <PaymentBreakdown payments={splitPayments} onChange={setSplitPayments} total={cartTotal} />
         </div>
+      )}
+
+      {mode === 'adeuda' && (
+        <label className="mt-3 block text-xs text-gray-400">
+          Nombre del deudor
+          <input
+            value={debtorName}
+            onChange={(e) => setDebtorName(e.target.value)}
+            placeholder="Quien se lo lleva fiado"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+          />
+        </label>
       )}
 
       <ErrorText error={error} />

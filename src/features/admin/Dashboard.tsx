@@ -30,7 +30,9 @@ export function Dashboard() {
 
   const ingresosHoy =
     todayReservations.reduce((sum, r) => sum + r.priceTotal, 0) +
-    todaySales.reduce((sum, s) => sum + s.total, 0)
+    todaySales
+      .filter((s) => s.paymentStatus === 'pagado')
+      .reduce((sum, s) => sum + s.total, 0)
   const productosVendidosHoy = todaySales.reduce(
     (sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + item.qty, 0),
     0,

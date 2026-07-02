@@ -47,12 +47,16 @@ export interface SalePayment {
   amount: number
 }
 
+export type PaymentStatus = 'pagado' | 'adeuda'
+
 export interface Sale {
   id: string
   date: string // YYYY-MM-DD
   items: SaleItem[]
   total: number
-  paymentMethod: PaymentMethod
+  paymentMethod: PaymentMethod | null
+  paymentStatus: PaymentStatus
+  customerName?: string
   reservationId?: string
   payments: SalePayment[]
 }
@@ -73,12 +77,4 @@ export interface HeroSlide {
   subtitle: string
   order: number
   published: boolean
-}
-
-export interface Debtor {
-  id: string
-  customerName: string
-  amount: number
-  detail: string
-  paid: boolean
 }

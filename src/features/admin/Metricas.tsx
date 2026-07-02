@@ -48,7 +48,7 @@ export function Metricas() {
         .filter((r) => r.date === date && r.status !== 'cancelado')
         .reduce((sum, r) => sum + r.priceTotal, 0)
       const salesTotal = sales
-        .filter((s) => s.date === date)
+        .filter((s) => s.date === date && s.paymentStatus === 'pagado')
         .reduce((sum, s) => sum + s.total, 0)
       return { label: weekdayShort(d), total: reservationsTotal + salesTotal }
     })
@@ -81,7 +81,9 @@ export function Metricas() {
 
   const paymentBreakdown = useMemo(() => {
     const totals: Record<PaymentMethod, number> = { efectivo: 0, transferencia: 0, mixto: 0 }
-    for (const sale of sales) totals[sale.paymentMethod] += sale.total
+    for (const sale of sales) {
+      if (sale.paymentStatus === 'pagado' && sale.paymentMethod) totals[sale.paymentMethod] += sale.total
+    }
     const grandTotal = totals.efectivo + totals.transferencia + totals.mixto
     return (Object.keys(totals) as PaymentMethod[])
       .filter((method) => totals[method] > 0)
