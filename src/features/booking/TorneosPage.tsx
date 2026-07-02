@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { TournamentListItem } from '@/components/TournamentListItem'
 
 export function TorneosPage() {
+  const { venueSlug } = useParams()
   const whatsappPhone = useSettingsStore((s) => s.whatsappPhone)
   const tournaments = useTournamentsStore((s) => s.tournaments)
     .filter((t) => t.published)
@@ -11,7 +12,7 @@ export function TorneosPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
-      <Link to="/" className="mb-4 text-sm text-gray-400">
+      <Link to={`/${venueSlug}`} className="mb-4 text-sm text-gray-400">
         &larr; Volver
       </Link>
 

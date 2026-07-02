@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { PaymentMethod, PaymentStatus, Sale, SaleItem, SalePayment } from '@/types'
 import { toDateKey } from '@/lib/format'
 
@@ -67,15 +68,20 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
   sales: [],
   loading: false,
   fetchSales: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
     const { data, error } = await supabase
       .from('sales')
       .select('*, sale_items(*), sale_payments(*)')
+      .eq('venue_id', venueId)
       .order('date')
     if (!error && data) set({ sales: data.map(fromRow) })
     set({ loading: false })
   },
   addSale: async (items, paymentMethod, payments, reservationId, customerName, reservationFee = 0) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const itemsTotal = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
     const total = itemsTotal + reservationFee
     const date = toDateKey(new Date())
@@ -84,6 +90,7 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
     const { data: sale, error: saleError } = await supabase
       .from('sales')
       .insert({
+        venue_id: venueId,
         date,
         total,
         payment_method: paymentMethod,
@@ -98,6 +105,7 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
     if (items.length > 0) {
       const { error: itemsError } = await supabase.from('sale_items').insert(
         items.map((item) => ({
+          venue_id: venueId,
           sale_id: sale.id,
           product_id: item.productId,
           qty: item.qty,
@@ -109,7 +117,7 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
 
     if (paymentMethod === 'mixto' && payments.length > 0) {
       const { error: paymentsError } = await supabase.from('sale_payments').insert(
-        payments.map((p) => ({ sale_id: sale.id, method: p.method, amount: p.amount })),
+        payments.map((p) => ({ venue_id: venueId, sale_id: sale.id, method: p.method, amount: p.amount })),
       )
       if (paymentsError) return paymentsError.message
     }
@@ -133,6 +141,8 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
     return null
   },
   settleSale: async (id, paymentMethod, payments) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { error } = await supabase
       .from('sales')
       .update({ payment_status: 'pagado', payment_method: paymentMethod })
@@ -141,7 +151,7 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
 
     if (paymentMethod === 'mixto' && payments.length > 0) {
       const { error: paymentsError } = await supabase.from('sale_payments').insert(
-        payments.map((p) => ({ sale_id: id, method: p.method, amount: p.amount })),
+        payments.map((p) => ({ venue_id: venueId, sale_id: id, method: p.method, amount: p.amount })),
       )
       if (paymentsError) return paymentsError.message
     }

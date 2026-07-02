@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 export function AdminLoginPage() {
@@ -62,6 +62,13 @@ export function AdminLoginPage() {
         >
           {submitting ? 'Ingresando...' : 'Ingresar'}
         </button>
+
+        <p className="mt-4 text-center text-sm text-gray-500">
+          Sos un club nuevo?{' '}
+          <Link to="/admin/signup" className="text-primary-500 hover:underline">
+            Crear cuenta
+          </Link>
+        </p>
       </form>
     </div>
   )

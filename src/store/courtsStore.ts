@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Court } from '@/types'
 
 interface CourtsState {
@@ -15,13 +16,25 @@ export const useCourtsStore = create<CourtsState>()((set, get) => ({
   courts: [],
   loading: false,
   fetchCourts: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('courts').select('id, name, price').order('name')
+    const { data, error } = await supabase
+      .from('courts')
+      .select('id, name, price')
+      .eq('venue_id', venueId)
+      .order('name')
     if (!error && data) set({ courts: data })
     set({ loading: false })
   },
   addCourt: async (name, price) => {
-    const { data, error } = await supabase.from('courts').insert({ name, price }).select().single()
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
+    const { data, error } = await supabase
+      .from('courts')
+      .insert({ name, price, venue_id: venueId })
+      .select('id, name, price')
+      .single()
     if (error) return error.message
     set({ courts: [...get().courts, data] })
     return null

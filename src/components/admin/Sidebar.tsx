@@ -17,13 +17,18 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const venueName = useSettingsStore((s) => s.venueName)
+  const logoUrl = useSettingsStore((s) => s.logoUrl)
   const logout = useAdminAuthStore((s) => s.logout)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navContent = (
     <>
       <div className="mb-6 flex items-center gap-2 px-2">
-        <span className="h-8 w-8 rounded-full bg-primary-500" />
+        {logoUrl ? (
+          <img src={logoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+        ) : (
+          <span className="h-8 w-8 rounded-full bg-primary-500" />
+        )}
         <span className="font-semibold text-gray-50">{venueName}</span>
       </div>
 
@@ -62,7 +67,11 @@ export function Sidebar() {
     <>
       <div className="flex items-center justify-between border-b border-gray-800 bg-gray-900 p-4 lg:hidden">
         <div className="flex items-center gap-2">
-          <span className="h-6 w-6 rounded-full bg-primary-500" />
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+          ) : (
+            <span className="h-6 w-6 rounded-full bg-primary-500" />
+          )}
           <span className="font-semibold text-gray-50">{venueName}</span>
         </div>
         <button

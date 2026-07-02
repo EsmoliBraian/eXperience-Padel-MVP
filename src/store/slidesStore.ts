@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { HeroSlide } from '@/types'
 
 interface SlideRow {
@@ -35,15 +36,24 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
   slides: [],
   loading: false,
   fetchSlides: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('hero_slides').select('*').order('order')
+    const { data, error } = await supabase
+      .from('hero_slides')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('order')
     if (!error && data) set({ slides: data.map(fromRow) })
     set({ loading: false })
   },
   addSlide: async (slide) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { data, error } = await supabase
       .from('hero_slides')
       .insert({
+        venue_id: venueId,
         image_url: slide.imageUrl,
         title: slide.title,
         subtitle: slide.subtitle,

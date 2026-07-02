@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { useSettingsStore } from '@/store/settingsStore'
 import { ErrorText } from '@/components/ErrorText'
+import { uploadImage } from '@/lib/storage'
 
 export function Configuracion() {
   const settings = useSettingsStore()
@@ -8,15 +9,44 @@ export function Configuracion() {
 
   const [venueName, setVenueName] = useState(settings.venueName)
   const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone)
+  const [logoUrl, setLogoUrl] = useState(settings.logoUrl ?? '')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
-  const dirty = venueName !== settings.venueName || whatsappPhone !== settings.whatsappPhone
+  const dirty =
+    venueName !== settings.venueName ||
+    whatsappPhone !== settings.whatsappPhone ||
+    logoUrl !== (settings.logoUrl ?? '')
+
+  const bookingLink = settings.slug ? `${window.location.origin}/${settings.slug}` : ''
+
+  async function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    setError(null)
+    try {
+      setLogoUrl(await uploadImage(file))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo subir el logo.')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!bookingLink) return
+    await navigator.clipboard.writeText(bookingLink)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
 
   async function handleSave() {
     setSaving(true)
-    const saveError = await updateSettings({ venueName, whatsappPhone })
+    const saveError = await updateSettings({ venueName, whatsappPhone, logoUrl: logoUrl || undefined })
     setSaving(false)
     if (saveError) {
       setError(saveError)
@@ -30,6 +60,26 @@ export function Configuracion() {
   return (
     <div className="max-w-lg space-y-4">
       <h1 className="text-xl font-semibold text-gray-50">Configuracion</h1>
+
+      {bookingLink && (
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <p className="mb-2 text-sm text-gray-400">Tu link publico de reservas</p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={bookingLink}
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+            />
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="shrink-0 rounded-lg bg-primary-500 px-3 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+            >
+              {linkCopied ? 'Copiado!' : 'Copiar'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
         <label className="block text-sm text-gray-400">
@@ -50,6 +100,21 @@ export function Configuracion() {
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
           />
         </label>
+
+        <div className="block text-sm text-gray-400">
+          Logo / icono del club
+          <div className="mt-1 flex items-center gap-3">
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+            ) : (
+              <span className="h-12 w-12 rounded-full bg-gray-800" />
+            )}
+            <label className="cursor-pointer rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800">
+              {uploadingLogo ? 'Subiendo...' : 'Cambiar logo'}
+              <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+            </label>
+          </div>
+        </div>
 
         <p className="text-xs text-gray-500">
           Las canchas y su precio se administran en la seccion Reservas.

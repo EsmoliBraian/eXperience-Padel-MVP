@@ -11,8 +11,10 @@ export interface TimeSlotStatus {
   court: Court | null
 }
 
+type ScheduleSettings = Pick<Settings, 'openHour' | 'closeHour' | 'slotDurationMinutes'>
+
 export function getTimeSlotsWithStatus(
-  settings: Settings,
+  settings: ScheduleSettings,
   courts: Court[],
   reservations: Reservation[],
   date: string,
@@ -34,7 +36,7 @@ export function getTimeSlotsWithStatus(
 }
 
 export function getAvailableSlots(
-  settings: Settings,
+  settings: ScheduleSettings,
   courts: Court[],
   reservations: Reservation[],
   date: string,

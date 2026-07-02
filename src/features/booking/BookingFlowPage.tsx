@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
@@ -11,6 +11,7 @@ import { buildReservationMessage, buildWhatsAppLink } from '@/lib/whatsapp'
 type Step = 'slot' | 'players' | 'confirm'
 
 export function BookingFlowPage() {
+  const { venueSlug } = useParams()
   const settings = useSettingsStore()
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
@@ -63,7 +64,7 @@ export function BookingFlowPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
-      <Link to="/" className="mb-4 text-sm text-gray-400">
+      <Link to={`/${venueSlug}`} className="mb-4 text-sm text-gray-400">
         &larr; Volver
       </Link>
 

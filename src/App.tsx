@@ -1,13 +1,21 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { VenueDirectoryPage } from '@/features/booking/VenueDirectoryPage'
+import { PublicVenueLayout } from '@/features/booking/PublicVenueLayout'
 import { UserHomePage } from '@/features/booking/UserHomePage'
 import { BookingFlowPage } from '@/features/booking/BookingFlowPage'
 import { TorneosPage } from '@/features/booking/TorneosPage'
 import { ProtectedRoute } from '@/features/admin/ProtectedRoute'
-import { useHydrateStores } from '@/lib/useHydrateStores'
+import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 const AdminLoginPage = lazy(() =>
   import('@/features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })),
+)
+const AdminSignupPage = lazy(() =>
+  import('@/features/admin/AdminSignupPage').then((m) => ({ default: m.AdminSignupPage })),
+)
+const AdminSetupPage = lazy(() =>
+  import('@/features/admin/AdminSetupPage').then((m) => ({ default: m.AdminSetupPage })),
 )
 const AdminLayout = lazy(() =>
   import('@/features/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
@@ -47,17 +55,25 @@ function AdminFallback() {
 }
 
 function App() {
-  useHydrateStores()
+  useEffect(() => {
+    useAdminAuthStore.getState().init()
+  }, [])
 
   return (
     <BrowserRouter>
       <Suspense fallback={<AdminFallback />}>
         <Routes>
-          <Route path="/" element={<UserHomePage />} />
-          <Route path="/reservar" element={<BookingFlowPage />} />
-          <Route path="/torneos" element={<TorneosPage />} />
+          <Route path="/" element={<VenueDirectoryPage />} />
+
+          <Route path="/:venueSlug" element={<PublicVenueLayout />}>
+            <Route index element={<UserHomePage />} />
+            <Route path="reservar" element={<BookingFlowPage />} />
+            <Route path="torneos" element={<TorneosPage />} />
+          </Route>
 
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/signup" element={<AdminSignupPage />} />
+          <Route path="/admin/setup" element={<AdminSetupPage />} />
           <Route
             path="/admin"
             element={

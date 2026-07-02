@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Tournament } from '@/types'
 
 interface TournamentRow {
@@ -35,15 +36,24 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
   tournaments: [],
   loading: false,
   fetchTournaments: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('tournaments').select('*').order('date')
+    const { data, error } = await supabase
+      .from('tournaments')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('date')
     if (!error && data) set({ tournaments: data.map(fromRow) })
     set({ loading: false })
   },
   addTournament: async (tournament) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { data, error } = await supabase
       .from('tournaments')
       .insert({
+        venue_id: venueId,
         name: tournament.name,
         date: tournament.date,
         description: tournament.description,

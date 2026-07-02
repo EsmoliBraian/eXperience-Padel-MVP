@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Product } from '@/types'
 
 interface ProductRow {
@@ -33,18 +34,24 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
   products: [],
   loading: false,
   fetchProducts: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
     const { data, error } = await supabase
       .from('products')
       .select('id, name, description, category_id, price')
+      .eq('venue_id', venueId)
       .order('name')
     if (!error && data) set({ products: data.map(fromRow) })
     set({ loading: false })
   },
   addProduct: async (product) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { data, error } = await supabase
       .from('products')
       .insert({
+        venue_id: venueId,
         name: product.name,
         description: product.description,
         category_id: product.categoryId ?? null,

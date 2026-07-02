@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
@@ -8,7 +8,9 @@ import { TournamentListItem } from '@/components/TournamentListItem'
 const HERO_ROTATE_MS = 5000
 
 export function UserHomePage() {
+  const { venueSlug } = useParams()
   const venueName = useSettingsStore((s) => s.venueName)
+  const logoUrl = useSettingsStore((s) => s.logoUrl)
   const whatsappPhone = useSettingsStore((s) => s.whatsappPhone)
   const tournaments = useTournamentsStore((s) => s.tournaments).filter((t) => t.published)
   const slides = useSlidesStore((s) => s.slides).filter((s) => s.published)
@@ -29,7 +31,11 @@ export function UserHomePage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
       <div className="mb-1 flex items-center gap-2 text-sm text-gray-400">
-        <span className="h-2 w-2 rounded-full bg-primary-500" />
+        {logoUrl ? (
+          <img src={logoUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+        ) : (
+          <span className="h-2 w-2 rounded-full bg-primary-500" />
+        )}
         {venueName}
       </div>
 
@@ -70,7 +76,7 @@ export function UserHomePage() {
       )}
 
       <Link
-        to="/reservar"
+        to={`/${venueSlug}/reservar`}
         className="mt-6 rounded-lg bg-primary-500 py-3 text-center font-medium text-gray-950 shadow-glow-primary hover:bg-primary-400"
       >
         VER HORARIOS
@@ -79,7 +85,7 @@ export function UserHomePage() {
       <div className="mt-8">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-medium text-gray-300">Proximos torneos</h2>
-          <Link to="/torneos" className="text-xs text-primary-500 hover:underline">
+          <Link to={`/${venueSlug}/torneos`} className="text-xs text-primary-500 hover:underline">
             VER TODOS
           </Link>
         </div>

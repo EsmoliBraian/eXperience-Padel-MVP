@@ -1,14 +1,18 @@
--- eXperience Padel MVP schema
+-- eXperience Padel MVP schema (multi-tenant)
 -- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query)
--- for a brand new project. If you already ran this file before, don't
--- re-run it — apply supabase/migrations/002_features.sql instead.
+-- for a brand new project. Each row of `settings` is one tenant ("venue" /
+-- club); every other table is scoped to a venue via `venue_id`. New venues
+-- are created through the app's own signup + setup flow, not seeded here.
 
 create extension if not exists pgcrypto;
 
 create table if not exists settings (
   id uuid primary key default gen_random_uuid(),
-  venue_name text not null default 'Padel Center',
+  owner_id uuid references auth.users(id),
+  slug text unique,
+  venue_name text not null default 'Mi club',
   whatsapp_phone text not null default '',
+  logo_url text,
   slot_duration_minutes int not null default 60,
   open_hour int not null default 8,
   close_hour int not null default 23
@@ -16,18 +20,22 @@ create table if not exists settings (
 
 create table if not exists courts (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   name text not null,
   price numeric not null default 8000
 );
 
 create table if not exists closed_dates (
   id uuid primary key default gen_random_uuid(),
-  date date not null unique,
-  reason text
+  venue_id uuid not null references settings(id) on delete cascade,
+  date date not null,
+  reason text,
+  unique (venue_id, date)
 );
 
 create table if not exists reservations (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   court_id uuid not null references courts(id) on delete cascade,
   date date not null,
   time text not null,
@@ -41,11 +49,14 @@ create table if not exists reservations (
 
 create table if not exists categories (
   id uuid primary key default gen_random_uuid(),
-  name text not null unique
+  venue_id uuid not null references settings(id) on delete cascade,
+  name text not null,
+  unique (venue_id, name)
 );
 
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   name text not null,
   description text not null default '',
   category_id uuid references categories(id) on delete set null,
@@ -54,15 +65,19 @@ create table if not exists products (
 
 create table if not exists sales (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   date date not null,
   total numeric not null,
-  payment_method text not null check (payment_method in ('efectivo', 'transferencia', 'mixto')),
+  payment_status text not null default 'pagado' check (payment_status in ('pagado', 'adeuda')),
+  payment_method text check (payment_method in ('efectivo', 'transferencia', 'mixto')),
+  customer_name text,
   reservation_id uuid references reservations(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 create table if not exists sale_items (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   sale_id uuid not null references sales(id) on delete cascade,
   product_id uuid not null references products(id),
   qty int not null,
@@ -71,6 +86,7 @@ create table if not exists sale_items (
 
 create table if not exists sale_payments (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   sale_id uuid not null references sales(id) on delete cascade,
   method text not null check (method in ('efectivo', 'transferencia')),
   amount numeric not null
@@ -78,6 +94,7 @@ create table if not exists sale_payments (
 
 create table if not exists tournaments (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   name text not null,
   date date not null,
   description text not null default '',
@@ -87,6 +104,7 @@ create table if not exists tournaments (
 
 create table if not exists hero_slides (
   id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
   image_url text not null default '',
   title text not null,
   subtitle text not null default '',
@@ -94,17 +112,7 @@ create table if not exists hero_slides (
   published boolean not null default true
 );
 
-create table if not exists debtors (
-  id uuid primary key default gen_random_uuid(),
-  customer_name text not null,
-  amount numeric not null,
-  detail text not null default '',
-  paid boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
--- Row level security: everyone can read; only logged-in admins can write,
--- except the public booking flow is allowed to insert its own reservation.
+-- Row level security.
 alter table settings enable row level security;
 alter table courts enable row level security;
 alter table reservations enable row level security;
@@ -114,62 +122,80 @@ alter table sale_items enable row level security;
 alter table sale_payments enable row level security;
 alter table tournaments enable row level security;
 alter table hero_slides enable row level security;
-alter table debtors enable row level security;
 alter table closed_dates enable row level security;
 alter table categories enable row level security;
 
+-- The single source of truth every write policy checks against: the
+-- venue owned by the currently authenticated user, if any.
+create or replace function get_my_venue_id()
+returns uuid
+language sql
+security definer
+stable
+as $$
+  select id from settings where owner_id = auth.uid() limit 1;
+$$;
+
+-- settings: select is public (the public site resolves a venue by slug),
+-- insert is what makes self-serve signup work (a fresh user can create
+-- exactly one venue for themselves), update/delete are owner-only.
 create policy "public read settings" on settings for select using (true);
-create policy "admin write settings" on settings for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner insert settings" on settings for insert
+  with check (owner_id = auth.uid());
+create policy "owner update settings" on settings for update
+  using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy "owner delete settings" on settings for delete
+  using (owner_id = auth.uid());
 
 create policy "public read courts" on courts for select using (true);
-create policy "admin write courts" on courts for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write courts" on courts for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read reservations" on reservations for select using (true);
 create policy "public create reservations" on reservations for insert with check (true);
-create policy "admin update reservations" on reservations for update
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "admin delete reservations" on reservations for delete
-  using (auth.role() = 'authenticated');
+create policy "owner update reservations" on reservations for update
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
+create policy "owner delete reservations" on reservations for delete
+  using (venue_id = get_my_venue_id());
 
 create policy "public read products" on products for select using (true);
-create policy "admin write products" on products for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write products" on products for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
-create policy "public read sales" on sales for select using (true);
-create policy "admin write sales" on sales for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+-- Financial data: admin-of-that-venue only, never public.
+create policy "owner read sales" on sales for select
+  using (venue_id = get_my_venue_id());
+create policy "owner write sales" on sales for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
-create policy "public read sale_items" on sale_items for select using (true);
-create policy "admin write sale_items" on sale_items for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner read sale_items" on sale_items for select
+  using (venue_id = get_my_venue_id());
+create policy "owner write sale_items" on sale_items for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
+
+create policy "owner read sale_payments" on sale_payments for select
+  using (venue_id = get_my_venue_id());
+create policy "owner write sale_payments" on sale_payments for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read tournaments" on tournaments for select using (true);
-create policy "admin write tournaments" on tournaments for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-
-create policy "public read sale_payments" on sale_payments for select using (true);
-create policy "admin write sale_payments" on sale_payments for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write tournaments" on tournaments for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read hero_slides" on hero_slides for select using (true);
-create policy "admin write hero_slides" on hero_slides for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-
-create policy "public read debtors" on debtors for select using (true);
-create policy "admin write debtors" on debtors for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write hero_slides" on hero_slides for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read closed_dates" on closed_dates for select using (true);
-create policy "admin write closed_dates" on closed_dates for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write closed_dates" on closed_dates for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read categories" on categories for select using (true);
-create policy "admin write categories" on categories for all
-  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "owner write categories" on categories for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
--- Storage bucket for hero slide images, uploaded from the admin panel.
+-- Storage bucket for hero slide, tournament, and venue logo images,
+-- uploaded from the admin panel.
 insert into storage.buckets (id, name, public)
 values ('slides', 'slides', true)
 on conflict (id) do nothing;
@@ -183,23 +209,5 @@ create policy "admin write slide images" on storage.objects for all
 -- Realtime: let clients subscribe to live reservation changes.
 alter publication supabase_realtime add table public.reservations;
 
--- Seed: structural minimum so the app isn't empty on first load.
--- Real reservations/sales/tournaments accumulate from actual use.
-insert into settings (venue_name, whatsapp_phone, slot_duration_minutes, open_hour, close_hour)
-values ('Padel Center', '5491122334455', 60, 8, 23);
-
-insert into courts (name, price) values
-  ('Cancha 1', 8000), ('Cancha 2', 8000), ('Cancha 3', 8000), ('Cancha 4', 8000);
-
-insert into products (name, price) values
-  ('Agua mineral', 1500),
-  ('Gatorade', 2000),
-  ('Grip Wilson', 2500),
-  ('Overgrip Pro', 1800);
-
-insert into hero_slides (image_url, title, subtitle, "order") values
-  ('', 'Tu mejor partido empieza aca', 'Reserva tu turno facil y rapido', 0);
-
--- After running this: create one admin user under
--- Authentication -> Users -> Add user (email + password). That is the
--- login for /admin — there is no public sign-up in the app.
+-- No seed data: venues (settings rows) are created by signing up through
+-- the app (/admin/signup -> /admin/setup), not inserted here.

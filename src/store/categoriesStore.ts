@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Category } from '@/types'
 
 interface CategoriesState {
@@ -15,13 +16,25 @@ export const useCategoriesStore = create<CategoriesState>()((set, get) => ({
   categories: [],
   loading: false,
   fetchCategories: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('categories').select('id, name').order('name')
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('venue_id', venueId)
+      .order('name')
     if (!error && data) set({ categories: data })
     set({ loading: false })
   },
   addCategory: async (name) => {
-    const { data, error } = await supabase.from('categories').insert({ name }).select().single()
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name, venue_id: venueId })
+      .select('id, name')
+      .single()
     if (error) return error.message
     set({ categories: [...get().categories, data].sort((a, b) => a.name.localeCompare(b.name)) })
     return null

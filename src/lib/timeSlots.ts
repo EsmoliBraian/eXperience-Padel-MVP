@@ -1,6 +1,8 @@
 import type { Settings } from '@/types'
 
-export function generateTimeLabels(settings: Settings): string[] {
+type ScheduleSettings = Pick<Settings, 'openHour' | 'closeHour' | 'slotDurationMinutes'>
+
+export function generateTimeLabels(settings: ScheduleSettings): string[] {
   const labels: string[] = []
   const startMinutes = settings.openHour * 60
   const endMinutes = settings.closeHour * 60

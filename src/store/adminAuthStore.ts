@@ -8,6 +8,7 @@ interface AdminAuthState {
   isAuthenticated: boolean
   init: () => void
   login: (email: string, password: string) => Promise<string | null>
+  signUp: (email: string, password: string) => Promise<{ error: string | null; hasSession: boolean }>
   logout: () => Promise<void>
 }
 
@@ -28,6 +29,13 @@ export const useAdminAuthStore = create<AdminAuthState>()((set) => ({
     if (error) return error.message
     set({ session: data.session, isAuthenticated: !!data.session })
     return null
+  },
+  signUp: async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) return { error: error.message, hasSession: false }
+    const hasSession = !!data.session
+    if (hasSession) set({ session: data.session, isAuthenticated: true })
+    return { error: null, hasSession }
   },
   logout: async () => {
     await supabase.auth.signOut()

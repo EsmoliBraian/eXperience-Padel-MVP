@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { ClosedDate } from '@/types'
 
 interface ClosedDateRow {
@@ -24,15 +25,23 @@ export const useClosedDatesStore = create<ClosedDatesState>()((set, get) => ({
   closedDates: [],
   loading: false,
   fetchClosedDates: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('closed_dates').select('*').order('date')
+    const { data, error } = await supabase
+      .from('closed_dates')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('date')
     if (!error && data) set({ closedDates: data.map(fromRow) })
     set({ loading: false })
   },
   addClosedDate: async (date, reason) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { data, error } = await supabase
       .from('closed_dates')
-      .insert({ date, reason: reason || null })
+      .insert({ venue_id: venueId, date, reason: reason || null })
       .select()
       .single()
     if (error) return error.message

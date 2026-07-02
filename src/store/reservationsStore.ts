@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Reservation, ReservationStatus } from '@/types'
 
 interface ReservationRow {
@@ -42,17 +43,26 @@ export const useReservationsStore = create<ReservationsState>()((set, get) => ({
   reservations: [],
   loading: false,
   fetchReservations: async () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return
     set({ loading: true })
-    const { data, error } = await supabase.from('reservations').select('*').order('date').order('time')
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('venue_id', venueId)
+      .order('date')
+      .order('time')
     if (!error && data) set({ reservations: data.map(fromRow) })
     set({ loading: false })
   },
   subscribeToChanges: () => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return () => {}
     const channel = supabase
-      .channel('reservations-changes')
+      .channel(`reservations-changes-${venueId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations' },
+        { event: '*', schema: 'public', table: 'reservations', filter: `venue_id=eq.${venueId}` },
         () => {
           get().fetchReservations()
         },
@@ -63,9 +73,12 @@ export const useReservationsStore = create<ReservationsState>()((set, get) => ({
     }
   },
   addReservation: async (reservation) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
     const { data, error } = await supabase
       .from('reservations')
       .insert({
+        venue_id: venueId,
         court_id: reservation.courtId,
         date: reservation.date,
         time: reservation.time,

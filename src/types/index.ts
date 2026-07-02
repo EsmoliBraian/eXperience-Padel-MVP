@@ -5,8 +5,12 @@ export interface Court {
 }
 
 export interface Settings {
+  id: string
+  ownerId: string
+  slug: string
   venueName: string
   whatsappPhone: string
+  logoUrl?: string
   slotDurationMinutes: number
   openHour: number
   closeHour: number
