@@ -2,6 +2,24 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
 import type { Product } from '@/types'
 
+interface ProductRow {
+  id: string
+  name: string
+  description: string
+  category_id: string | null
+  price: number
+}
+
+function fromRow(row: ProductRow): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    categoryId: row.category_id ?? undefined,
+    price: row.price,
+  }
+}
+
 interface ProductsState {
   products: Product[]
   loading: boolean
@@ -18,19 +36,34 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
     set({ loading: true })
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, description, category, price')
+      .select('id, name, description, category_id, price')
       .order('name')
-    if (!error && data) set({ products: data })
+    if (!error && data) set({ products: data.map(fromRow) })
     set({ loading: false })
   },
   addProduct: async (product) => {
-    const { data, error } = await supabase.from('products').insert(product).select().single()
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name: product.name,
+        description: product.description,
+        category_id: product.categoryId ?? null,
+        price: product.price,
+      })
+      .select()
+      .single()
     if (error) return error.message
-    set({ products: [...get().products, data] })
+    set({ products: [...get().products, fromRow(data)] })
     return null
   },
   updateProduct: async (id, patch) => {
-    const { error } = await supabase.from('products').update(patch).eq('id', id)
+    const row: Partial<ProductRow> = {}
+    if (patch.name !== undefined) row.name = patch.name
+    if (patch.description !== undefined) row.description = patch.description
+    if (patch.categoryId !== undefined) row.category_id = patch.categoryId ?? null
+    if (patch.price !== undefined) row.price = patch.price
+
+    const { error } = await supabase.from('products').update(row).eq('id', id)
     if (error) return error.message
     set({ products: get().products.map((p) => (p.id === id ? { ...p, ...patch } : p)) })
     return null

@@ -1,17 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useProductsStore } from '@/store/productsStore'
+import { useCategoriesStore } from '@/store/categoriesStore'
 import { ErrorText } from '@/components/ErrorText'
+import { CategoriesModal } from '@/features/admin/CategoriesModal'
 import { formatCurrency } from '@/lib/format'
-import type { Product } from '@/types'
+import type { Category, Product } from '@/types'
 
-function ProductCard({ product, categoryOptions }: { product: Product; categoryOptions: string[] }) {
+function ProductCard({ product, categories }: { product: Product; categories: Category[] }) {
   const updateProduct = useProductsStore((s) => s.updateProduct)
   const deleteProduct = useProductsStore((s) => s.deleteProduct)
 
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(product.name)
   const [description, setDescription] = useState(product.description)
-  const [category, setCategory] = useState(product.category ?? '')
+  const [categoryId, setCategoryId] = useState(product.categoryId ?? '')
   const [price, setPrice] = useState(product.price)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -19,13 +21,15 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
   const dirty =
     name !== product.name ||
     description !== product.description ||
-    category !== (product.category ?? '') ||
+    categoryId !== (product.categoryId ?? '') ||
     price !== product.price
+
+  const categoryName = categories.find((c) => c.id === product.categoryId)?.name
 
   function handleEdit() {
     setName(product.name)
     setDescription(product.description)
-    setCategory(product.category ?? '')
+    setCategoryId(product.categoryId ?? '')
     setPrice(product.price)
     setError(null)
     setEditing(true)
@@ -34,7 +38,7 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
   function handleCancel() {
     setName(product.name)
     setDescription(product.description)
-    setCategory(product.category ?? '')
+    setCategoryId(product.categoryId ?? '')
     setPrice(product.price)
     setError(null)
     setEditing(false)
@@ -45,7 +49,7 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
     const saveError = await updateProduct(product.id, {
       name,
       description,
-      category: category || undefined,
+      categoryId: categoryId || undefined,
       price,
     })
     setSaving(false)
@@ -63,9 +67,9 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-gray-100">{product.name}</p>
-            {product.category && (
+            {categoryName && (
               <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
-                {product.category}
+                {categoryName}
               </span>
             )}
           </div>
@@ -105,18 +109,18 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">
           Categoria (opcional)
-          <input
-            list="product-categories"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Ej: Bebidas, Accesorios..."
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          />
-          <datalist id="product-categories">
-            {categoryOptions.map((c) => (
-              <option key={c} value={c} />
+          >
+            <option value="">Sin categoria</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
-          </datalist>
+          </select>
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">
           Descripcion
@@ -164,14 +168,10 @@ function ProductCard({ product, categoryOptions }: { product: Product; categoryO
 export function Productos() {
   const products = useProductsStore((s) => s.products)
   const addProduct = useProductsStore((s) => s.addProduct)
+  const categories = useCategoriesStore((s) => s.categories)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-
-  const categoryOptions = useMemo(
-    () =>
-      Array.from(new Set(products.map((p) => p.category).filter((c): c is string => !!c))).sort(),
-    [products],
-  )
+  const [showCategories, setShowCategories] = useState(false)
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return products
@@ -185,15 +185,24 @@ export function Productos() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-gray-50">Productos</h1>
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
-        >
-          + Nuevo producto
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCategories(true)}
+            className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          >
+            Crear o editar categoria
+          </button>
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+          >
+            + Nuevo producto
+          </button>
+        </div>
       </div>
 
       <input
@@ -207,7 +216,7 @@ export function Productos() {
 
       <div className="space-y-3">
         {filteredProducts.map((p) => (
-          <ProductCard key={p.id} product={p} categoryOptions={categoryOptions} />
+          <ProductCard key={p.id} product={p} categories={categories} />
         ))}
         {filteredProducts.length === 0 && (
           <p className="text-sm text-gray-500">
@@ -215,6 +224,8 @@ export function Productos() {
           </p>
         )}
       </div>
+
+      {showCategories && <CategoriesModal onClose={() => setShowCategories(false)} />}
     </div>
   )
 }

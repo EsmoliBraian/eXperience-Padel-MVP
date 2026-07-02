@@ -39,11 +39,16 @@ create table if not exists reservations (
   created_at timestamptz not null default now()
 );
 
+create table if not exists categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique
+);
+
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text not null default '',
-  category text,
+  category_id uuid references categories(id) on delete set null,
   price numeric not null
 );
 
@@ -111,6 +116,7 @@ alter table tournaments enable row level security;
 alter table hero_slides enable row level security;
 alter table debtors enable row level security;
 alter table closed_dates enable row level security;
+alter table categories enable row level security;
 
 create policy "public read settings" on settings for select using (true);
 create policy "admin write settings" on settings for all
@@ -157,6 +163,10 @@ create policy "admin write debtors" on debtors for all
 
 create policy "public read closed_dates" on closed_dates for select using (true);
 create policy "admin write closed_dates" on closed_dates for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create policy "public read categories" on categories for select using (true);
+create policy "admin write categories" on categories for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
 -- Storage bucket for hero slide images, uploaded from the admin panel.
