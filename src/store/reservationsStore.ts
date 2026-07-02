@@ -32,7 +32,8 @@ interface ReservationsState {
   reservations: Reservation[]
   loading: boolean
   fetchReservations: () => Promise<void>
-  addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>
+  subscribeToChanges: () => () => void
+  addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<string | null>
   updateStatus: (id: string, status: ReservationStatus) => Promise<void>
   deleteReservation: (id: string) => Promise<void>
 }
@@ -45,6 +46,21 @@ export const useReservationsStore = create<ReservationsState>()((set, get) => ({
     const { data, error } = await supabase.from('reservations').select('*').order('date').order('time')
     if (!error && data) set({ reservations: data.map(fromRow) })
     set({ loading: false })
+  },
+  subscribeToChanges: () => {
+    const channel = supabase
+      .channel('reservations-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations' },
+        () => {
+          get().fetchReservations()
+        },
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
   },
   addReservation: async (reservation) => {
     const { data, error } = await supabase
@@ -61,7 +77,9 @@ export const useReservationsStore = create<ReservationsState>()((set, get) => ({
       })
       .select()
       .single()
-    if (!error && data) set({ reservations: [...get().reservations, fromRow(data)] })
+    if (error || !data) return error?.message ?? 'No se pudo guardar la reserva.'
+    set({ reservations: [...get().reservations, fromRow(data)] })
+    return null
   },
   updateStatus: async (id, status) => {
     const { error } = await supabase.from('reservations').update({ status }).eq('id', id)

@@ -12,12 +12,10 @@ export function Configuracion() {
 
   const [venueName, setVenueName] = useState(settings.venueName)
   const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone)
-  const [pricePerPlayer, setPricePerPlayer] = useState(settings.pricePerPlayer)
-  const [priceFullCourt, setPriceFullCourt] = useState(settings.priceFullCourt)
   const [saved, setSaved] = useState(false)
 
   async function handleSave() {
-    await updateSettings({ venueName, whatsappPhone, pricePerPlayer, priceFullCourt })
+    await updateSettings({ venueName, whatsappPhone })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -45,27 +43,6 @@ export function Configuracion() {
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
           />
         </label>
-
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block text-sm text-gray-400">
-            Precio por jugador
-            <input
-              type="number"
-              value={pricePerPlayer}
-              onChange={(e) => setPricePerPlayer(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-            />
-          </label>
-          <label className="block text-sm text-gray-400">
-            Precio cancha completa (4 jugadores)
-            <input
-              type="number"
-              value={priceFullCourt}
-              onChange={(e) => setPriceFullCourt(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-            />
-          </label>
-        </div>
       </div>
 
       <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
@@ -84,7 +61,7 @@ export function Configuracion() {
           <div key={court.id} className="flex items-center gap-2">
             <input
               value={court.name}
-              onChange={(e) => updateCourt(court.id, e.target.value)}
+              onChange={(e) => updateCourt(court.id, { name: e.target.value })}
               className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
             />
             <button
@@ -97,6 +74,9 @@ export function Configuracion() {
           </div>
         ))}
         {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
+        <p className="text-xs text-gray-500">
+          El precio de cada cancha se configura en la seccion Reservas.
+        </p>
       </div>
 
       <button

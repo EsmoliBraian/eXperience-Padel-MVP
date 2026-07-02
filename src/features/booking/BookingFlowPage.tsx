@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
+import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { getAvailableSlots, type TimeSlot } from '@/lib/availability'
+import { getTurnoPrice } from '@/lib/pricing'
 import { formatCurrency, formatLongDate, fromDateKey, nextDays, toDateKey, weekdayShort } from '@/lib/format'
 import { buildReservationMessage, buildWhatsAppLink } from '@/lib/whatsapp'
 
@@ -14,6 +16,7 @@ export function BookingFlowPage() {
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const addReservation = useReservationsStore((s) => s.addReservation)
+  const closedDates = useClosedDatesStore((s) => s.closedDates)
 
   const days = useMemo(() => nextDays(5), [])
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(days[0]))
@@ -21,13 +24,13 @@ export function BookingFlowPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [players, setPlayers] = useState(4)
 
+  const isClosed = closedDates.some((c) => c.date === selectedDate)
   const availableSlots = useMemo(
-    () => getAvailableSlots(settings, courts, reservations, selectedDate),
-    [settings, courts, reservations, selectedDate],
+    () => getAvailableSlots(settings, courts, reservations, selectedDate, closedDates),
+    [settings, courts, reservations, selectedDate, closedDates],
   )
 
-  const total =
-    players === 4 ? settings.priceFullCourt : players * settings.pricePerPlayer
+  const total = selectedSlot ? getTurnoPrice(selectedSlot.court, settings) : 0
 
   function handlePickSlot(slot: TimeSlot) {
     setSelectedSlot(slot)
@@ -103,7 +106,9 @@ export function BookingFlowPage() {
               </button>
             ))}
             {availableSlots.length === 0 && (
-              <p className="text-sm text-gray-500">No hay horarios disponibles para este dia.</p>
+              <p className="text-sm text-gray-500">
+                {isClosed ? 'Cerrado ese dia.' : 'No hay horarios disponibles para este dia.'}
+              </p>
             )}
           </div>
         </>
@@ -143,7 +148,7 @@ export function BookingFlowPage() {
           </div>
 
           <p className="mb-4 text-sm text-gray-400">
-            Precio total ({players} jugadores)
+            Precio total
             <span className="ml-2 text-lg font-semibold text-gray-50">
               {formatCurrency(total)}
             </span>

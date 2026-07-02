@@ -3,6 +3,9 @@ import { Modal } from '@/components/Modal'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
+import { ErrorText } from '@/components/ErrorText'
+import { generateTimeLabels } from '@/lib/timeSlots'
+import { getTurnoPrice } from '@/lib/pricing'
 import type { ReservationStatus } from '@/types'
 import { todayKey } from '@/lib/format'
 
@@ -11,31 +14,37 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
   const courts = useCourtsStore((s) => s.courts)
   const addReservation = useReservationsStore((s) => s.addReservation)
 
-  const hours = Array.from(
-    { length: settings.closeHour - settings.openHour },
-    (_, i) => settings.openHour + i,
-  )
+  const times = generateTimeLabels(settings)
 
   const [date, setDate] = useState(todayKey())
-  const [time, setTime] = useState(`${String(hours[0]).padStart(2, '0')}:00`)
+  const [time, setTime] = useState(times[0] ?? '')
   const [courtId, setCourtId] = useState(courts[0]?.id ?? '')
-  const [players, setPlayers] = useState(4)
   const [customerName, setCustomerName] = useState('')
   const [status, setStatus] = useState<ReservationStatus>('confirmado')
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const selectedCourt = courts.find((c) => c.id === courtId)
 
   async function handleSubmit() {
-    if (!courtId) return
-    const priceTotal = players === 4 ? settings.priceFullCourt : players * settings.pricePerPlayer
-    await addReservation({
+    if (!courtId || !selectedCourt) return
+    setSaving(true)
+    const priceTotal = getTurnoPrice(selectedCourt, settings)
+    const saveError = await addReservation({
       courtId,
       date,
       time,
-      players,
+      players: 4,
       status,
       customerName: customerName || undefined,
       createdVia: 'admin',
       priceTotal,
     })
+    setSaving(false)
+    if (saveError) {
+      setError(saveError)
+      return
+    }
     onClose()
   }
 
@@ -59,14 +68,11 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
             onChange={(e) => setTime(e.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
           >
-            {hours.map((h) => {
-              const value = `${String(h).padStart(2, '0')}:00`
-              return (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              )
-            })}
+            {times.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -80,21 +86,6 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
             {courts.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block text-gray-400">
-          Jugadores
-          <select
-            value={players}
-            onChange={(e) => setPlayers(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          >
-            {[1, 2, 3, 4].map((n) => (
-              <option key={n} value={n}>
-                {n}
               </option>
             ))}
           </select>
@@ -121,12 +112,15 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
           </select>
         </label>
 
+        <ErrorText error={error} />
+
         <button
           type="button"
           onClick={handleSubmit}
-          className="w-full rounded-lg bg-primary-500 py-2 font-medium text-gray-950 hover:bg-primary-400"
+          disabled={saving}
+          className="w-full rounded-lg bg-primary-500 py-2 font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
         >
-          Guardar reserva
+          {saving ? 'Guardando...' : 'Guardar reserva'}
         </button>
       </div>
     </Modal>

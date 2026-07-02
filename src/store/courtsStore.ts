@@ -6,9 +6,9 @@ interface CourtsState {
   courts: Court[]
   loading: boolean
   fetchCourts: () => Promise<void>
-  addCourt: (name: string) => Promise<void>
-  updateCourt: (id: string, name: string) => Promise<void>
-  deleteCourt: (id: string) => Promise<void>
+  addCourt: (name: string) => Promise<string | null>
+  updateCourt: (id: string, patch: Partial<Omit<Court, 'id'>>) => Promise<string | null>
+  deleteCourt: (id: string) => Promise<string | null>
 }
 
 export const useCourtsStore = create<CourtsState>()((set, get) => ({
@@ -16,22 +16,30 @@ export const useCourtsStore = create<CourtsState>()((set, get) => ({
   loading: false,
   fetchCourts: async () => {
     set({ loading: true })
-    const { data, error } = await supabase.from('courts').select('id, name').order('name')
+    const { data, error } = await supabase.from('courts').select('id, name, price').order('name')
     if (!error && data) set({ courts: data })
     set({ loading: false })
   },
   addCourt: async (name) => {
     const { data, error } = await supabase.from('courts').insert({ name }).select().single()
-    if (!error && data) set({ courts: [...get().courts, data] })
+    if (error) return error.message
+    set({ courts: [...get().courts, data] })
+    return null
   },
-  updateCourt: async (id, name) => {
-    const { error } = await supabase.from('courts').update({ name }).eq('id', id)
-    if (!error) {
-      set({ courts: get().courts.map((c) => (c.id === id ? { ...c, name } : c)) })
-    }
+  updateCourt: async (id, patch) => {
+    const row: { name?: string; price?: number | null } = {}
+    if (patch.name !== undefined) row.name = patch.name
+    if (patch.price !== undefined) row.price = patch.price ?? null
+
+    const { error } = await supabase.from('courts').update(row).eq('id', id)
+    if (error) return error.message
+    set({ courts: get().courts.map((c) => (c.id === id ? { ...c, ...patch } : c)) })
+    return null
   },
   deleteCourt: async (id) => {
     const { error } = await supabase.from('courts').delete().eq('id', id)
-    if (!error) set({ courts: get().courts.filter((c) => c.id !== id) })
+    if (error) return error.message
+    set({ courts: get().courts.filter((c) => c.id !== id) })
+    return null
   },
 }))

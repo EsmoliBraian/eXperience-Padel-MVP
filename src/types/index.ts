@@ -1,15 +1,22 @@
 export interface Court {
   id: string
   name: string
+  price?: number
 }
 
 export interface Settings {
   venueName: string
   whatsappPhone: string
-  pricePerPlayer: number
-  priceFullCourt: number
+  defaultPrice: number
+  slotDurationMinutes: number
   openHour: number
   closeHour: number
+}
+
+export interface ClosedDate {
+  id: string
+  date: string // YYYY-MM-DD
+  reason?: string
 }
 
 export type ReservationStatus = 'reservado' | 'confirmado' | 'cancelado'

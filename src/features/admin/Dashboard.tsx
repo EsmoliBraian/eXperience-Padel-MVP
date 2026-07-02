@@ -3,7 +3,9 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
+import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { getAvailableSlots } from '@/lib/availability'
+import { generateTimeLabels } from '@/lib/timeSlots'
 import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
 import { formatCurrency, todayKey } from '@/lib/format'
 import { KpiCard } from '@/components/KpiCard'
@@ -17,6 +19,7 @@ export function Dashboard() {
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
+  const closedDates = useClosedDatesStore((s) => s.closedDates)
 
   const [showModal, setShowModal] = useState(false)
 
@@ -39,12 +42,15 @@ export function Dashboard() {
     (sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + item.qty, 0),
     0,
   )
-  const turnosDisponiblesHoy = getAvailableSlots(settings, courts, reservations, today).length
+  const turnosDisponiblesHoy = getAvailableSlots(
+    settings,
+    courts,
+    reservations,
+    today,
+    closedDates,
+  ).length
 
-  const hours = Array.from(
-    { length: settings.closeHour - settings.openHour },
-    (_, i) => settings.openHour + i,
-  )
+  const times = generateTimeLabels(settings)
 
   return (
     <div className="space-y-6">
@@ -81,8 +87,7 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {hours.map((hour) => {
-                const time = `${String(hour).padStart(2, '0')}:00`
+              {times.map((time) => {
                 return (
                   <tr key={time} className="border-t border-gray-800">
                     <td className="py-2 pr-2 text-gray-500">{time}</td>

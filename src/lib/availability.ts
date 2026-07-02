@@ -1,4 +1,5 @@
-import type { Court, Reservation, Settings } from '@/types'
+import type { ClosedDate, Court, Reservation, Settings } from '@/types'
+import { generateTimeLabels } from '@/lib/timeSlots'
 
 export interface TimeSlot {
   time: string
@@ -10,14 +11,16 @@ export function getAvailableSlots(
   courts: Court[],
   reservations: Reservation[],
   date: string,
+  closedDates: ClosedDate[] = [],
 ): TimeSlot[] {
+  if (closedDates.some((c) => c.date === date)) return []
+
   const dayReservations = reservations.filter(
     (r) => r.date === date && r.status !== 'cancelado',
   )
 
   const slots: TimeSlot[] = []
-  for (let hour = settings.openHour; hour < settings.closeHour; hour++) {
-    const time = `${String(hour).padStart(2, '0')}:00`
+  for (const time of generateTimeLabels(settings)) {
     const takenCourtIds = new Set(
       dayReservations.filter((r) => r.time === time).map((r) => r.courtId),
     )

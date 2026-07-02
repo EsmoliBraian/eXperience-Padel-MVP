@@ -9,15 +9,22 @@ create table if not exists settings (
   id uuid primary key default gen_random_uuid(),
   venue_name text not null default 'Padel Center',
   whatsapp_phone text not null default '',
-  price_per_player numeric not null default 2200,
-  price_full_court numeric not null default 8000,
+  default_price numeric not null default 8000,
+  slot_duration_minutes int not null default 60,
   open_hour int not null default 8,
   close_hour int not null default 23
 );
 
 create table if not exists courts (
   id uuid primary key default gen_random_uuid(),
-  name text not null
+  name text not null,
+  price numeric
+);
+
+create table if not exists closed_dates (
+  id uuid primary key default gen_random_uuid(),
+  date date not null unique,
+  reason text
 );
 
 create table if not exists reservations (
@@ -103,6 +110,7 @@ alter table sale_payments enable row level security;
 alter table tournaments enable row level security;
 alter table hero_slides enable row level security;
 alter table debtors enable row level security;
+alter table closed_dates enable row level security;
 
 create policy "public read settings" on settings for select using (true);
 create policy "admin write settings" on settings for all
@@ -147,6 +155,10 @@ create policy "public read debtors" on debtors for select using (true);
 create policy "admin write debtors" on debtors for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+create policy "public read closed_dates" on closed_dates for select using (true);
+create policy "admin write closed_dates" on closed_dates for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
 -- Storage bucket for hero slide images, uploaded from the admin panel.
 insert into storage.buckets (id, name, public)
 values ('slides', 'slides', true)
@@ -158,10 +170,13 @@ create policy "admin write slide images" on storage.objects for all
   using (bucket_id = 'slides' and auth.role() = 'authenticated')
   with check (bucket_id = 'slides' and auth.role() = 'authenticated');
 
+-- Realtime: let clients subscribe to live reservation changes.
+alter publication supabase_realtime add table public.reservations;
+
 -- Seed: structural minimum so the app isn't empty on first load.
 -- Real reservations/sales/tournaments accumulate from actual use.
-insert into settings (venue_name, whatsapp_phone, price_per_player, price_full_court, open_hour, close_hour)
-values ('Padel Center', '5491122334455', 2200, 8000, 8, 23);
+insert into settings (venue_name, whatsapp_phone, default_price, slot_duration_minutes, open_hour, close_hour)
+values ('Padel Center', '5491122334455', 8000, 60, 8, 23);
 
 insert into courts (name) values ('Cancha 1'), ('Cancha 2'), ('Cancha 3'), ('Cancha 4');
 
