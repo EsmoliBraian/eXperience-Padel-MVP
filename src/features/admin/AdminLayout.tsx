@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '@/components/admin/Sidebar'
+import '@fortawesome/fontawesome-free/css/all.min.css'
 
 export function AdminLayout() {
   return (

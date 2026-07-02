@@ -18,7 +18,7 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
     set({ loading: true })
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, description, price')
+      .select('id, name, description, category, price')
       .order('name')
     if (!error && data) set({ products: data })
     set({ loading: false })

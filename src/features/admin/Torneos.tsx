@@ -9,6 +9,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   const updateTournament = useTournamentsStore((s) => s.updateTournament)
   const deleteTournament = useTournamentsStore((s) => s.deleteTournament)
 
+  const [editing, setEditing] = useState(false)
   const [name, setName] = useState(tournament.name)
   const [date, setDate] = useState(tournament.date)
   const [description, setDescription] = useState(tournament.description)
@@ -23,10 +24,30 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
     description !== tournament.description ||
     imageUrl !== (tournament.imageUrl ?? '')
 
+  function handleEdit() {
+    setName(tournament.name)
+    setDate(tournament.date)
+    setDescription(tournament.description)
+    setImageUrl(tournament.imageUrl ?? '')
+    setError(null)
+    setEditing(true)
+  }
+
+  function handleCancel() {
+    setName(tournament.name)
+    setDate(tournament.date)
+    setDescription(tournament.description)
+    setImageUrl(tournament.imageUrl ?? '')
+    setError(null)
+    setEditing(false)
+  }
+
   async function handleSave() {
     setSaving(true)
-    setError(await updateTournament(tournament.id, { name, date, description, imageUrl }))
+    const saveError = await updateTournament(tournament.id, { name, date, description, imageUrl })
     setSaving(false)
+    setError(saveError)
+    if (!saveError) setEditing(false)
   }
 
   async function handlePublishToggle() {
@@ -49,6 +70,55 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 
   async function handleDelete() {
     setError(await deleteTournament(tournament.id))
+  }
+
+  if (!editing) {
+    return (
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {tournament.imageUrl && (
+              <img
+                src={tournament.imageUrl}
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-lg object-cover"
+              />
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-gray-100">{tournament.name}</p>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    tournament.published
+                      ? 'bg-success/20 text-success'
+                      : 'bg-gray-800 text-gray-400'
+                  }`}
+                >
+                  {tournament.published ? 'Publicado' : 'Borrador'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">{tournament.date}</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-xs">
+            <button
+              type="button"
+              onClick={handlePublishToggle}
+              className="text-primary-500 hover:underline"
+            >
+              {tournament.published ? 'Despublicar' : 'Publicar'}
+            </button>
+            <button type="button" onClick={handleEdit} className="text-primary-500 hover:underline">
+              Editar
+            </button>
+            <button type="button" onClick={handleDelete} className="text-danger hover:underline">
+              Eliminar
+            </button>
+          </div>
+        </div>
+        <ErrorText error={error} />
+      </div>
+    )
   }
 
   return (
@@ -133,14 +203,23 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         >
           Eliminar torneo
         </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!dirty || saving}
-          className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
-        >
-          {saving ? 'Guardando...' : dirty ? 'Guardar cambios' : 'Guardado'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-lg border border-gray-700 px-4 py-1.5 text-xs text-gray-300 hover:bg-gray-800"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+          >
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -8,6 +8,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   const updateSlide = useSlidesStore((s) => s.updateSlide)
   const deleteSlide = useSlidesStore((s) => s.deleteSlide)
 
+  const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(slide.title)
   const [subtitle, setSubtitle] = useState(slide.subtitle)
   const [imageUrl, setImageUrl] = useState(slide.imageUrl)
@@ -17,10 +18,28 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
 
   const dirty = title !== slide.title || subtitle !== slide.subtitle || imageUrl !== slide.imageUrl
 
+  function handleEdit() {
+    setTitle(slide.title)
+    setSubtitle(slide.subtitle)
+    setImageUrl(slide.imageUrl)
+    setError(null)
+    setEditing(true)
+  }
+
+  function handleCancel() {
+    setTitle(slide.title)
+    setSubtitle(slide.subtitle)
+    setImageUrl(slide.imageUrl)
+    setError(null)
+    setEditing(false)
+  }
+
   async function handleSave() {
     setSaving(true)
-    setError(await updateSlide(slide.id, { title, subtitle, imageUrl }))
+    const saveError = await updateSlide(slide.id, { title, subtitle, imageUrl })
     setSaving(false)
+    setError(saveError)
+    if (!saveError) setEditing(false)
   }
 
   async function handlePublishToggle() {
@@ -43,6 +62,53 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
 
   async function handleDelete() {
     setError(await deleteSlide(slide.id))
+  }
+
+  if (!editing) {
+    return (
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {slide.imageUrl && (
+              <img
+                src={slide.imageUrl}
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-lg object-cover"
+              />
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-gray-100">{slide.title}</p>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    slide.published ? 'bg-success/20 text-success' : 'bg-gray-800 text-gray-400'
+                  }`}
+                >
+                  {slide.published ? 'Publicado' : 'Borrador'}
+                </span>
+              </div>
+              <p className="truncate text-xs text-gray-500">{slide.subtitle}</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-xs">
+            <button
+              type="button"
+              onClick={handlePublishToggle}
+              className="text-primary-500 hover:underline"
+            >
+              {slide.published ? 'Despublicar' : 'Publicar'}
+            </button>
+            <button type="button" onClick={handleEdit} className="text-primary-500 hover:underline">
+              Editar
+            </button>
+            <button type="button" onClick={handleDelete} className="text-danger hover:underline">
+              Eliminar
+            </button>
+          </div>
+        </div>
+        <ErrorText error={error} />
+      </div>
+    )
   }
 
   return (
@@ -116,14 +182,23 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
         >
           Eliminar slide
         </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!dirty || saving}
-          className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
-        >
-          {saving ? 'Guardando...' : dirty ? 'Guardar cambios' : 'Guardado'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-lg border border-gray-700 px-4 py-1.5 text-xs text-gray-300 hover:bg-gray-800"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+          >
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
       </div>
     </div>
   )

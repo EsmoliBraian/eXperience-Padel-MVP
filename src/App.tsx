@@ -1,49 +1,83 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { UserHomePage } from '@/features/booking/UserHomePage'
 import { BookingFlowPage } from '@/features/booking/BookingFlowPage'
-import { AdminLoginPage } from '@/features/admin/AdminLoginPage'
-import { AdminLayout } from '@/features/admin/AdminLayout'
+import { TorneosPage } from '@/features/booking/TorneosPage'
 import { ProtectedRoute } from '@/features/admin/ProtectedRoute'
-import { Dashboard } from '@/features/admin/Dashboard'
-import { Reservas } from '@/features/admin/Reservas'
-import { Horarios } from '@/features/admin/Horarios'
-import { Slides } from '@/features/admin/Slides'
-import { Torneos } from '@/features/admin/Torneos'
-import { Productos } from '@/features/admin/Productos'
-import { VentasDelDia } from '@/features/admin/VentasDelDia'
-import { Metricas } from '@/features/admin/Metricas'
-import { Configuracion } from '@/features/admin/Configuracion'
 import { useHydrateStores } from '@/lib/useHydrateStores'
+
+const AdminLoginPage = lazy(() =>
+  import('@/features/admin/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })),
+)
+const AdminLayout = lazy(() =>
+  import('@/features/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+)
+const Dashboard = lazy(() =>
+  import('@/features/admin/Dashboard').then((m) => ({ default: m.Dashboard })),
+)
+const Reservas = lazy(() =>
+  import('@/features/admin/Reservas').then((m) => ({ default: m.Reservas })),
+)
+const Horarios = lazy(() =>
+  import('@/features/admin/Horarios').then((m) => ({ default: m.Horarios })),
+)
+const Slides = lazy(() => import('@/features/admin/Slides').then((m) => ({ default: m.Slides })))
+const Torneos = lazy(() =>
+  import('@/features/admin/Torneos').then((m) => ({ default: m.Torneos })),
+)
+const Productos = lazy(() =>
+  import('@/features/admin/Productos').then((m) => ({ default: m.Productos })),
+)
+const VentasDelDia = lazy(() =>
+  import('@/features/admin/VentasDelDia').then((m) => ({ default: m.VentasDelDia })),
+)
+const Metricas = lazy(() =>
+  import('@/features/admin/Metricas').then((m) => ({ default: m.Metricas })),
+)
+const Configuracion = lazy(() =>
+  import('@/features/admin/Configuracion').then((m) => ({ default: m.Configuracion })),
+)
+
+function AdminFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
+      Cargando...
+    </div>
+  )
+}
 
 function App() {
   useHydrateStores()
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<UserHomePage />} />
-        <Route path="/reservar" element={<BookingFlowPage />} />
+      <Suspense fallback={<AdminFallback />}>
+        <Routes>
+          <Route path="/" element={<UserHomePage />} />
+          <Route path="/reservar" element={<BookingFlowPage />} />
+          <Route path="/torneos" element={<TorneosPage />} />
 
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="reservas" element={<Reservas />} />
-          <Route path="horarios" element={<Horarios />} />
-          <Route path="slides" element={<Slides />} />
-          <Route path="torneos" element={<Torneos />} />
-          <Route path="productos" element={<Productos />} />
-          <Route path="ventas" element={<VentasDelDia />} />
-          <Route path="metricas" element={<Metricas />} />
-          <Route path="configuracion" element={<Configuracion />} />
-        </Route>
-      </Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="reservas" element={<Reservas />} />
+            <Route path="horarios" element={<Horarios />} />
+            <Route path="slides" element={<Slides />} />
+            <Route path="torneos" element={<Torneos />} />
+            <Route path="productos" element={<Productos />} />
+            <Route path="ventas" element={<VentasDelDia />} />
+            <Route path="metricas" element={<Metricas />} />
+            <Route path="configuracion" element={<Configuracion />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }
