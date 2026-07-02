@@ -11,12 +11,20 @@ interface TurnoCheckoutGroupProps {
 export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
   const sales = useSalesStore((s) => s.sales)
   const [personaCount, setPersonaCount] = useState(Math.max(1, reservation.players))
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [courtFeeAssignedIndex, setCourtFeeAssignedIndex] = useState<number | null>(null)
+  const [closedMap, setClosedMap] = useState<Record<number, boolean>>({})
 
   const linkedSales = useMemo(
     () => sales.filter((s) => s.reservationId === reservation.id),
     [sales, reservation.id],
   )
+
+  function handlePersonaCount(next: number) {
+    const clamped = Math.max(1, next)
+    setPersonaCount(clamped)
+    if (selectedIndex >= clamped) setSelectedIndex(clamped - 1)
+  }
 
   return (
     <div className="space-y-3">
@@ -25,7 +33,7 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setPersonaCount((c) => Math.max(1, c - 1))}
+            onClick={() => handlePersonaCount(personaCount - 1)}
             className="h-6 w-6 rounded bg-gray-800 text-gray-300"
           >
             -
@@ -33,7 +41,7 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
           <span className="w-4 text-center text-sm text-gray-100">{personaCount}</span>
           <button
             type="button"
-            onClick={() => setPersonaCount((c) => c + 1)}
+            onClick={() => handlePersonaCount(personaCount + 1)}
             className="h-6 w-6 rounded bg-gray-800 text-gray-300"
           >
             +
@@ -55,18 +63,47 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-1.5">
         {Array.from({ length: personaCount }, (_, i) => (
-          <PersonaTab
+          <span
             key={i}
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              closedMap[i] ? 'bg-success/20 text-success' : 'bg-gray-800 text-gray-400'
+            }`}
+          >
+            Persona {i + 1}: {closedMap[i] ? 'Cerrada' : 'Abierta'}
+          </span>
+        ))}
+      </div>
+
+      <label className="block text-xs text-gray-400">
+        Ver persona
+        <select
+          value={selectedIndex}
+          onChange={(e) => setSelectedIndex(Number(e.target.value))}
+          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+        >
+          {Array.from({ length: personaCount }, (_, i) => (
+            <option key={i} value={i}>
+              Persona {i + 1}
+              {closedMap[i] ? ' — Cerrada' : ''}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {Array.from({ length: personaCount }, (_, i) => (
+        <div key={i} className={selectedIndex === i ? '' : 'hidden'}>
+          <PersonaTab
             index={i}
             reservationId={reservation.id}
             courtFee={reservation.priceTotal}
             isCourtFeeAssigned={courtFeeAssignedIndex === i}
             onToggleCourtFee={() => setCourtFeeAssignedIndex((prev) => (prev === i ? null : i))}
+            onStatusChange={(closed) => setClosedMap((prev) => ({ ...prev, [i]: closed }))}
           />
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }

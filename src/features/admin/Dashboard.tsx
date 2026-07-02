@@ -3,7 +3,6 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
-import { useTournamentsStore } from '@/store/tournamentsStore'
 import { getAvailableSlots } from '@/lib/availability'
 import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
 import { formatCurrency, todayKey } from '@/lib/format'
@@ -18,7 +17,6 @@ export function Dashboard() {
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
-  const tournaments = useTournamentsStore((s) => s.tournaments)
 
   const [showModal, setShowModal] = useState(false)
 
@@ -115,20 +113,6 @@ export function Dashboard() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="mb-3 text-sm font-medium text-gray-300">Proximos torneos</p>
-            <div className="space-y-2">
-              {tournaments.slice(0, 3).map((t) => (
-                <p key={t.id} className="text-sm text-gray-100">
-                  {t.name}
-                </p>
-              ))}
-              {tournaments.length === 0 && (
-                <p className="text-sm text-gray-500">Sin torneos.</p>
-              )}
-            </div>
-          </div>
-
           <VentaRapidaCard />
         </div>
       </div>

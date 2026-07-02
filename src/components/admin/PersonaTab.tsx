@@ -8,6 +8,7 @@ interface PersonaTabProps {
   courtFee: number
   isCourtFeeAssigned: boolean
   onToggleCourtFee: () => void
+  onStatusChange?: (closed: boolean) => void
 }
 
 export function PersonaTab({
@@ -16,6 +17,7 @@ export function PersonaTab({
   courtFee,
   isCourtFeeAssigned,
   onToggleCourtFee,
+  onStatusChange,
 }: PersonaTabProps) {
   const [name, setName] = useState(`Persona ${index + 1}`)
   const [confirmedCharges, setConfirmedCharges] = useState<number[]>([])
@@ -25,11 +27,13 @@ export function PersonaTab({
   function handleConfirmed(total: number) {
     setConfirmedCharges((prev) => [...prev, total])
     setShowForm(false)
+    onStatusChange?.(true)
   }
 
-  function handleAddAnother() {
+  function handleReopen() {
     setFormKey((k) => k + 1)
     setShowForm(true)
+    onStatusChange?.(false)
   }
 
   return (
@@ -69,13 +73,18 @@ export function PersonaTab({
           onConfirmed={handleConfirmed}
         />
       ) : (
-        <button
-          type="button"
-          onClick={handleAddAnother}
-          className="text-xs text-primary-500 hover:underline"
-        >
-          + Agregar otra venta
-        </button>
+        <div className="flex items-center justify-between">
+          <span className="rounded-full bg-success/20 px-2 py-0.5 text-xs font-medium text-success">
+            Cerrada
+          </span>
+          <button
+            type="button"
+            onClick={handleReopen}
+            className="text-xs text-primary-500 hover:underline"
+          >
+            Reabrir
+          </button>
+        </div>
       )}
     </div>
   )

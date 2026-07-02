@@ -1,63 +1,79 @@
-import { useMemo, useState } from 'react'
-import { useReservationsStore } from '@/store/reservationsStore'
-import { todayKey } from '@/lib/format'
-import { SaleCheckoutForm } from '@/components/admin/SaleCheckoutForm'
-import { TurnoCheckoutGroup } from '@/components/admin/TurnoCheckoutGroup'
+import { useRef, useState } from 'react'
+import { SaleWorkspace } from '@/components/admin/SaleWorkspace'
+
+interface Tab {
+  id: string
+  label: string
+}
 
 export function VentaRapidaCard() {
-  const reservations = useReservationsStore((s) => s.reservations)
-  const [linkedReservationId, setLinkedReservationId] = useState('')
+  const [tabs, setTabs] = useState<Tab[]>([{ id: 'tab-1', label: 'Cuenta 1' }])
+  const [activeTabId, setActiveTabId] = useState('tab-1')
+  const nextIdRef = useRef(2)
 
-  const today = todayKey()
-  const todayReservations = useMemo(
-    () =>
-      reservations
-        .filter((r) => r.date === today && r.status !== 'cancelado')
-        .sort((a, b) => a.time.localeCompare(b.time)),
-    [reservations, today],
-  )
+  function handleAddTab() {
+    const id = `tab-${nextIdRef.current++}`
+    setTabs((prev) => [...prev, { id, label: `Cuenta ${prev.length + 1}` }])
+    setActiveTabId(id)
+  }
 
-  const linkedReservation = todayReservations.find((r) => r.id === linkedReservationId)
-  const turnoConfirmed = linkedReservation?.status === 'confirmado'
+  function handleCloseTab(id: string) {
+    if (tabs.length === 1) return
+    if (!window.confirm('¿Cerrar esta cuenta? Se pierde lo que no se haya cobrado todavia.')) {
+      return
+    }
+    const remaining = tabs.filter((t) => t.id !== id)
+    setTabs(remaining)
+    if (activeTabId === id) setActiveTabId(remaining[0].id)
+  }
+
+  function handleLabelChange(id: string, label: string) {
+    setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, label } : t)))
+  }
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
       <p className="mb-3 text-sm font-medium text-gray-300">Venta rapida</p>
 
-      <label className="block text-xs text-gray-400">
-        Vincular al turno
-        <select
-          value={linkedReservationId}
-          onChange={(e) => setLinkedReservationId(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${
+              activeTabId === tab.id
+                ? 'border-primary-500 bg-primary-500/10 text-primary-500'
+                : 'border-gray-700 text-gray-400'
+            }`}
+          >
+            <button type="button" onClick={() => setActiveTabId(tab.id)}>
+              {tab.label}
+            </button>
+            {tabs.length > 1 && (
+              <button
+                type="button"
+                onClick={() => handleCloseTab(tab.id)}
+                aria-label={`Cerrar ${tab.label}`}
+                className="text-gray-500 hover:text-danger"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={handleAddTab}
+          className="rounded-lg border border-gray-700 px-2 py-1 text-xs text-primary-500 hover:bg-gray-800"
         >
-          <option value="">No vincular</option>
-          {todayReservations.map((r) => (
-            <option key={r.id} value={r.id}>
-              Vincular al turno: {r.time}hs{r.customerName ? ` - ${r.customerName}` : ''}
-              {r.status === 'confirmado' ? '' : ' (sin confirmar)'}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {linkedReservation && !turnoConfirmed && (
-        <p className="mt-1 text-xs text-gray-500">
-          Este turno no esta confirmado todavia, no se incluye el precio de cancha ni se
-          divide por persona.
-        </p>
-      )}
-
-      <div className="mt-3">
-        {turnoConfirmed && linkedReservation ? (
-          <TurnoCheckoutGroup key={linkedReservation.id} reservation={linkedReservation} />
-        ) : (
-          <SaleCheckoutForm
-            reservationId={linkedReservationId || undefined}
-            showSplitCalculator
-          />
-        )}
+          + Abrir otra cuenta
+        </button>
       </div>
+
+      {tabs.map((tab) => (
+        <div key={tab.id} className={activeTabId === tab.id ? '' : 'hidden'}>
+          <SaleWorkspace onLabelChange={(label) => handleLabelChange(tab.id, label)} />
+        </div>
+      ))}
     </div>
   )
 }

@@ -39,6 +39,7 @@ export function SaleCheckoutForm({
   const addSale = useSalesStore((s) => s.addSale)
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [showAllProducts, setShowAllProducts] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [mode, setMode] = useState<SaleMode>('efectivo')
   const [splitPayments, setSplitPayments] = useState<SalePayment[]>([])
@@ -46,11 +47,12 @@ export function SaleCheckoutForm({
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
-  const searchMatches = useMemo(() => {
+  const visibleProducts = useMemo(() => {
+    if (showAllProducts) return products
     if (!searchQuery.trim()) return []
     const q = searchQuery.trim().toLowerCase()
     return products.filter((p) => p.name.toLowerCase().includes(q))
-  }, [products, searchQuery])
+  }, [products, searchQuery, showAllProducts])
 
   const cartProducts = products.filter((p) => (quantities[p.id] ?? 0) > 0)
   const productsTotal = cartProducts.reduce((sum, p) => sum + quantities[p.id] * p.price, 0)
@@ -59,6 +61,7 @@ export function SaleCheckoutForm({
   function handleAddProduct(productId: string) {
     setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
     setSearchQuery('')
+    setShowAllProducts(false)
   }
 
   function handleQtyChange(productId: string, delta: number) {
@@ -113,15 +116,32 @@ export function SaleCheckoutForm({
   return (
     <div>
       <div className="relative">
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar producto..."
-          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
-        />
-        {searchMatches.length > 0 && (
+        <div className="flex items-center gap-2">
+          <input
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setShowAllProducts(false)
+            }}
+            placeholder="Buscar producto..."
+            className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+          />
+          <button
+            type="button"
+            onClick={() => setShowAllProducts((v) => !v)}
+            aria-label="Ver todos los productos"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-lg ${
+              showAllProducts
+                ? 'border-primary-500 bg-primary-500/10 text-primary-500'
+                : 'border-gray-700 text-gray-300'
+            }`}
+          >
+            +
+          </button>
+        </div>
+        {visibleProducts.length > 0 && (
           <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 shadow-lg">
-            {searchMatches.map((p) => (
+            {visibleProducts.map((p) => (
               <button
                 key={p.id}
                 type="button"
