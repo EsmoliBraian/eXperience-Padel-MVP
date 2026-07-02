@@ -7,6 +7,7 @@ interface PersonaTabProps {
   reservationId: string
   courtFee: number
   isCourtFeeAssigned: boolean
+  courtFeeAlreadyCharged: boolean
   onToggleCourtFee: () => void
   onStatusChange?: (closed: boolean) => void
 }
@@ -16,6 +17,7 @@ export function PersonaTab({
   reservationId,
   courtFee,
   isCourtFeeAssigned,
+  courtFeeAlreadyCharged,
   onToggleCourtFee,
   onStatusChange,
 }: PersonaTabProps) {
@@ -23,6 +25,8 @@ export function PersonaTab({
   const [confirmedCharges, setConfirmedCharges] = useState<number[]>([])
   const [showForm, setShowForm] = useState(true)
   const [formKey, setFormKey] = useState(0)
+
+  const appliedCourtFee = !courtFeeAlreadyCharged && isCourtFeeAssigned ? courtFee : 0
 
   function handleConfirmed(total: number) {
     setConfirmedCharges((prev) => [...prev, total])
@@ -44,7 +48,7 @@ export function PersonaTab({
           onChange={(e) => setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1 text-sm font-medium text-gray-100"
         />
-        {courtFee > 0 && (
+        {courtFee > 0 && !courtFeeAlreadyCharged && (
           <label className="flex shrink-0 items-center gap-1 text-xs text-gray-400">
             <input type="checkbox" checked={isCourtFeeAssigned} onChange={onToggleCourtFee} />
             Cancha
@@ -66,7 +70,7 @@ export function PersonaTab({
         <SaleCheckoutForm
           key={formKey}
           reservationId={reservationId}
-          extraFee={isCourtFeeAssigned ? courtFee : 0}
+          extraFee={appliedCourtFee}
           extraFeeLabel="Cancha"
           defaultDebtorName={name}
           confirmLabel="Cobrar"

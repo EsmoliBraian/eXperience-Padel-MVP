@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSalesStore } from '@/store/salesStore'
 import { PersonaTab } from '@/components/admin/PersonaTab'
 import { formatCurrency } from '@/lib/format'
+import { saleIncludesReservationFee } from '@/lib/salesRevenue'
 import type { Reservation } from '@/types'
 
 interface TurnoCheckoutGroupProps {
@@ -19,6 +20,7 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
     () => sales.filter((s) => s.reservationId === reservation.id),
     [sales, reservation.id],
   )
+  const courtFeeAlreadyCharged = linkedSales.some(saleIncludesReservationFee)
 
   function handlePersonaCount(next: number) {
     const clamped = Math.max(1, next)
@@ -48,6 +50,12 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
           </button>
         </div>
       </div>
+
+      {courtFeeAlreadyCharged && (
+        <p className="text-xs text-success">
+          Cancha ({formatCurrency(reservation.priceTotal)}) ya cobrada en este turno.
+        </p>
+      )}
 
       {linkedSales.length > 0 && (
         <div className="space-y-1 rounded-lg border border-gray-800 p-2">
@@ -99,6 +107,7 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
             reservationId={reservation.id}
             courtFee={reservation.priceTotal}
             isCourtFeeAssigned={courtFeeAssignedIndex === i}
+            courtFeeAlreadyCharged={courtFeeAlreadyCharged}
             onToggleCourtFee={() => setCourtFeeAssignedIndex((prev) => (prev === i ? null : i))}
             onStatusChange={(closed) => setClosedMap((prev) => ({ ...prev, [i]: closed }))}
           />
