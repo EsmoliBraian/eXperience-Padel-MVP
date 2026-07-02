@@ -6,6 +6,33 @@ export interface TimeSlot {
   court: Court
 }
 
+export interface TimeSlotStatus {
+  time: string
+  court: Court | null
+}
+
+export function getTimeSlotsWithStatus(
+  settings: Settings,
+  courts: Court[],
+  reservations: Reservation[],
+  date: string,
+  closedDates: ClosedDate[] = [],
+): TimeSlotStatus[] {
+  if (closedDates.some((c) => c.date === date)) return []
+
+  const dayReservations = reservations.filter(
+    (r) => r.date === date && r.status !== 'cancelado',
+  )
+
+  return generateTimeLabels(settings).map((time) => {
+    const takenCourtIds = new Set(
+      dayReservations.filter((r) => r.time === time).map((r) => r.courtId),
+    )
+    const court = courts.find((c) => !takenCourtIds.has(c.id)) ?? null
+    return { time, court }
+  })
+}
+
 export function getAvailableSlots(
   settings: Settings,
   courts: Court[],
@@ -13,19 +40,6 @@ export function getAvailableSlots(
   date: string,
   closedDates: ClosedDate[] = [],
 ): TimeSlot[] {
-  if (closedDates.some((c) => c.date === date)) return []
-
-  const dayReservations = reservations.filter(
-    (r) => r.date === date && r.status !== 'cancelado',
-  )
-
-  const slots: TimeSlot[] = []
-  for (const time of generateTimeLabels(settings)) {
-    const takenCourtIds = new Set(
-      dayReservations.filter((r) => r.time === time).map((r) => r.courtId),
-    )
-    const court = courts.find((c) => !takenCourtIds.has(c.id))
-    if (court) slots.push({ time, court })
-  }
-  return slots
+  return getTimeSlotsWithStatus(settings, courts, reservations, date, closedDates)
+    .filter((slot): slot is { time: string; court: Court } => slot.court !== null)
 }

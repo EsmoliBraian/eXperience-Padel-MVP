@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
-import { getAvailableSlots, type TimeSlot } from '@/lib/availability'
+import { getTimeSlotsWithStatus, type TimeSlot } from '@/lib/availability'
 import { formatCurrency, formatLongDate, fromDateKey, nextDays, toDateKey, weekdayShort } from '@/lib/format'
 import { buildReservationMessage, buildWhatsAppLink } from '@/lib/whatsapp'
 
@@ -24,8 +24,8 @@ export function BookingFlowPage() {
   const [players, setPlayers] = useState(4)
 
   const isClosed = closedDates.some((c) => c.date === selectedDate)
-  const availableSlots = useMemo(
-    () => getAvailableSlots(settings, courts, reservations, selectedDate, closedDates),
+  const timeSlots = useMemo(
+    () => getTimeSlotsWithStatus(settings, courts, reservations, selectedDate, closedDates),
     [settings, courts, reservations, selectedDate, closedDates],
   )
 
@@ -94,17 +94,23 @@ export function BookingFlowPage() {
 
           <h2 className="mb-2 text-sm font-medium text-gray-300">Horarios disponibles</h2>
           <div className="space-y-2">
-            {availableSlots.map((slot) => (
+            {timeSlots.map((slot) => (
               <button
                 key={slot.time}
                 type="button"
-                onClick={() => handlePickSlot(slot)}
-                className="w-full rounded-lg border border-gray-800 bg-gray-900 py-3 text-sm text-gray-100 hover:border-primary-500"
+                disabled={!slot.court}
+                onClick={() => slot.court && handlePickSlot({ time: slot.time, court: slot.court })}
+                className={`w-full rounded-lg border py-3 text-sm ${
+                  slot.court
+                    ? 'border-gray-800 bg-gray-900 text-gray-100 hover:border-primary-500'
+                    : 'cursor-not-allowed border-gray-800 bg-gray-900/40 text-gray-600'
+                }`}
               >
                 {slot.time}
+                {!slot.court && <span className="ml-2 text-xs">Reservado</span>}
               </button>
             ))}
-            {availableSlots.length === 0 && (
+            {timeSlots.length === 0 && (
               <p className="text-sm text-gray-500">
                 {isClosed ? 'Cerrado ese dia.' : 'No hay horarios disponibles para este dia.'}
               </p>

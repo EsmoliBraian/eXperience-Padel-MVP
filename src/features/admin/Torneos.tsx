@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { todayKey } from '@/lib/format'
+import { uploadImage } from '@/lib/storage'
 import { ErrorText } from '@/components/ErrorText'
 import type { Tournament } from '@/types'
 
@@ -11,20 +12,39 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   const [name, setName] = useState(tournament.name)
   const [date, setDate] = useState(tournament.date)
   const [description, setDescription] = useState(tournament.description)
+  const [imageUrl, setImageUrl] = useState(tournament.imageUrl ?? '')
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const dirty =
-    name !== tournament.name || date !== tournament.date || description !== tournament.description
+    name !== tournament.name ||
+    date !== tournament.date ||
+    description !== tournament.description ||
+    imageUrl !== (tournament.imageUrl ?? '')
 
   async function handleSave() {
     setSaving(true)
-    setError(await updateTournament(tournament.id, { name, date, description }))
+    setError(await updateTournament(tournament.id, { name, date, description, imageUrl }))
     setSaving(false)
   }
 
   async function handlePublishToggle() {
     setError(await updateTournament(tournament.id, { published: !tournament.published }))
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      setImageUrl(await uploadImage(file))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo subir la imagen.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   async function handleDelete() {
@@ -50,33 +70,57 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm text-gray-400">
-          Nombre
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          />
-        </label>
-        <label className="block text-sm text-gray-400">
-          Fecha
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          />
-        </label>
-        <label className="block text-sm text-gray-400 sm:col-span-2">
-          Descripcion
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-            rows={2}
-          />
-        </label>
+      <div className="flex gap-3">
+        {imageUrl && (
+          <img src={imageUrl} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+        )}
+        <div className="grid flex-1 gap-3 sm:grid-cols-2">
+          <label className="block text-sm text-gray-400">
+            Nombre
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            />
+          </label>
+          <label className="block text-sm text-gray-400">
+            Fecha
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            />
+          </label>
+          <label className="block text-sm text-gray-400 sm:col-span-2">
+            Descripcion
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+              rows={2}
+            />
+          </label>
+          <label className="block text-sm text-gray-400">
+            URL de imagen
+            <input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            />
+          </label>
+          <label className="block text-sm text-gray-400">
+            O subir imagen desde la computadora
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="mt-1 w-full text-sm text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-800 file:px-3 file:py-1.5 file:text-gray-100"
+            />
+            {uploading && <span className="text-xs text-gray-500">Subiendo...</span>}
+          </label>
+        </div>
       </div>
 
       <ErrorText error={error} />

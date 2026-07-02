@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 
-export async function uploadSlideImage(file: File): Promise<string> {
+export async function uploadImage(file: File): Promise<string> {
   const path = `${Date.now()}-${file.name}`
   const { error } = await supabase.storage.from('slides').upload(path, file)
   if (error) throw error

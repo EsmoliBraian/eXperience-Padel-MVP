@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSlidesStore } from '@/store/slidesStore'
-import { uploadSlideImage } from '@/lib/storage'
+import { uploadImage } from '@/lib/storage'
 import { ErrorText } from '@/components/ErrorText'
 import type { HeroSlide } from '@/types'
 
@@ -33,7 +33,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
     setUploading(true)
     setError(null)
     try {
-      setImageUrl(await uploadSlideImage(file))
+      setImageUrl(await uploadImage(file))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo subir la imagen.')
     } finally {
