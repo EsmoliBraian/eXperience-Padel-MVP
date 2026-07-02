@@ -1,13 +1,12 @@
 export interface Court {
   id: string
   name: string
-  price?: number
+  price: number
 }
 
 export interface Settings {
   venueName: string
   whatsappPhone: string
-  defaultPrice: number
   slotDurationMinutes: number
   openHour: number
   closeHour: number

@@ -5,24 +5,22 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ErrorText } from '@/components/ErrorText'
 import { formatCurrency, todayKey } from '@/lib/format'
-import type { ReservationStatus } from '@/types'
+import type { Court, ReservationStatus } from '@/types'
 
-function TurnoSettingsPanel() {
-  const defaultPrice = useSettingsStore((s) => s.defaultPrice)
+function DuracionTurnoPanel() {
   const slotDurationMinutes = useSettingsStore((s) => s.slotDurationMinutes)
   const updateSettings = useSettingsStore((s) => s.updateSettings)
-  const courts = useCourtsStore((s) => s.courts)
-  const updateCourt = useCourtsStore((s) => s.updateCourt)
 
-  const [price, setPrice] = useState(defaultPrice)
   const [duration, setDuration] = useState(slotDurationMinutes)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const dirty = duration !== slotDurationMinutes
+
   async function handleSave() {
     setSaving(true)
-    const saveError = await updateSettings({ defaultPrice: price, slotDurationMinutes: duration })
+    const saveError = await updateSettings({ slotDurationMinutes: duration })
     setSaving(false)
     if (saveError) {
       setError(saveError)
@@ -33,68 +31,152 @@ function TurnoSettingsPanel() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  async function handleCourtPriceChange(courtId: string, value: string) {
-    const price = value === '' ? null : Number(value)
-    const saveError = await updateCourt(courtId, { price: price ?? undefined })
-    if (saveError) setError(saveError)
-  }
-
   return (
-    <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
-      <p className="text-sm font-medium text-gray-300">Configuracion de turnos</p>
+    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <p className="mb-3 text-sm font-medium text-gray-300">Duracion de turno</p>
+      <label className="block text-sm text-gray-400">
+        Minutos por turno
+        <input
+          type="number"
+          value={duration}
+          onChange={(e) => setDuration(Number(e.target.value))}
+          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+        />
+      </label>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="block text-sm text-gray-400">
-          Duracion de cada turno (minutos)
-          <input
-            type="number"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          />
-        </label>
-        <label className="block text-sm text-gray-400">
-          Precio por turno (default)
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
-          />
-        </label>
-      </div>
+      <ErrorText error={error} />
 
       <button
         type="button"
         onClick={handleSave}
-        disabled={saving}
-        className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+        disabled={!dirty || saving}
+        className="mt-3 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
       >
         {saving ? 'Guardando...' : 'Guardar'}
       </button>
-      {saved && <p className="text-sm text-success">Configuracion guardada.</p>}
+      {saved && <p className="mt-2 text-sm text-success">Guardado.</p>}
+    </div>
+  )
+}
 
-      <div className="border-t border-gray-800 pt-3">
-        <p className="mb-2 text-xs text-gray-400">
-          Precio por cancha (opcional — si lo dejas vacio se usa el precio por defecto)
-        </p>
-        <div className="space-y-2">
-          {courts.map((court) => (
-            <div key={court.id} className="flex items-center gap-2">
-              <span className="flex-1 text-sm text-gray-300">{court.name}</span>
-              <input
-                type="number"
-                defaultValue={court.price ?? ''}
-                onBlur={(e) => handleCourtPriceChange(court.id, e.target.value)}
-                placeholder={`Default: ${formatCurrency(defaultPrice)}`}
-                className="w-40 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
-              />
-            </div>
-          ))}
-          {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
-        </div>
+function CanchaRow({ court }: { court: Court }) {
+  const updateCourt = useCourtsStore((s) => s.updateCourt)
+  const deleteCourt = useCourtsStore((s) => s.deleteCourt)
+
+  const [name, setName] = useState(court.name)
+  const [price, setPrice] = useState(court.price)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const dirty = name !== court.name || price !== court.price
+
+  async function handleSave() {
+    setSaving(true)
+    const saveError = await updateCourt(court.id, { name, price })
+    setSaving(false)
+    setError(saveError)
+  }
+
+  async function handleDelete() {
+    const deleteError = await deleteCourt(court.id)
+    if (deleteError) setError(deleteError)
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+        />
+        <input
+          type="number"
+          value={price}
+          onChange={(e) => setPrice(Number(e.target.value))}
+          className="w-32 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!dirty || saving}
+          className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+        >
+          {saving ? '...' : 'Guardar'}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="text-xs text-danger hover:underline"
+        >
+          Eliminar
+        </button>
+      </div>
+      <ErrorText error={error} />
+    </div>
+  )
+}
+
+function CanchasPanel() {
+  const courts = useCourtsStore((s) => s.courts)
+  const addCourt = useCourtsStore((s) => s.addCourt)
+
+  const [newName, setNewName] = useState('')
+  const [newPrice, setNewPrice] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+
+  const canAdd = newName.trim() !== '' && Number(newPrice) > 0
+
+  async function handleAdd() {
+    if (!canAdd) return
+    setAdding(true)
+    const addError = await addCourt(newName.trim(), Number(newPrice))
+    setAdding(false)
+    if (addError) {
+      setError(addError)
+      return
+    }
+    setError(null)
+    setNewName('')
+    setNewPrice('')
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <p className="text-sm font-medium text-gray-300">Canchas</p>
+      <p className="text-xs text-gray-500">Cada cancha tiene su propio precio por turno.</p>
+
+      <div className="space-y-3">
+        {courts.map((court) => (
+          <CanchaRow key={court.id} court={court} />
+        ))}
+        {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
       </div>
 
+      <div className="flex items-center gap-2 border-t border-gray-800 pt-3">
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="Nombre de la cancha"
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+        />
+        <input
+          type="number"
+          value={newPrice}
+          onChange={(e) => setNewPrice(e.target.value)}
+          placeholder="Precio"
+          className="w-32 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={!canAdd || adding}
+          className="rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+        >
+          + Agregar
+        </button>
+      </div>
       <ErrorText error={error} />
     </div>
   )
@@ -126,7 +208,10 @@ export function Reservas() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-gray-50">Reservas</h1>
 
-      <TurnoSettingsPanel />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <DuracionTurnoPanel />
+        <CanchasPanel />
+      </div>
 
       <div className="flex flex-wrap gap-3">
         <input

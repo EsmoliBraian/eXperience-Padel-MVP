@@ -5,7 +5,6 @@ import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { getAvailableSlots, type TimeSlot } from '@/lib/availability'
-import { getTurnoPrice } from '@/lib/pricing'
 import { formatCurrency, formatLongDate, fromDateKey, nextDays, toDateKey, weekdayShort } from '@/lib/format'
 import { buildReservationMessage, buildWhatsAppLink } from '@/lib/whatsapp'
 
@@ -30,7 +29,7 @@ export function BookingFlowPage() {
     [settings, courts, reservations, selectedDate, closedDates],
   )
 
-  const total = selectedSlot ? getTurnoPrice(selectedSlot.court, settings) : 0
+  const total = selectedSlot ? selectedSlot.court.price : 0
 
   function handlePickSlot(slot: TimeSlot) {
     setSelectedSlot(slot)

@@ -6,7 +6,6 @@ interface SettingsRow {
   id: string
   venue_name: string
   whatsapp_phone: string
-  default_price: number
   slot_duration_minutes: number
   open_hour: number
   close_hour: number
@@ -16,7 +15,6 @@ function fromRow(row: SettingsRow): Settings {
   return {
     venueName: row.venue_name,
     whatsappPhone: row.whatsapp_phone,
-    defaultPrice: row.default_price,
     slotDurationMinutes: row.slot_duration_minutes,
     openHour: row.open_hour,
     closeHour: row.close_hour,
@@ -26,7 +24,6 @@ function fromRow(row: SettingsRow): Settings {
 const defaultSettings: Settings = {
   venueName: '',
   whatsappPhone: '',
-  defaultPrice: 0,
   slotDurationMinutes: 60,
   openHour: 8,
   closeHour: 23,
@@ -55,7 +52,6 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     const row: Partial<SettingsRow> = {}
     if (patch.venueName !== undefined) row.venue_name = patch.venueName
     if (patch.whatsappPhone !== undefined) row.whatsapp_phone = patch.whatsappPhone
-    if (patch.defaultPrice !== undefined) row.default_price = patch.defaultPrice
     if (patch.slotDurationMinutes !== undefined) row.slot_duration_minutes = patch.slotDurationMinutes
     if (patch.openHour !== undefined) row.open_hour = patch.openHour
     if (patch.closeHour !== undefined) row.close_hour = patch.closeHour

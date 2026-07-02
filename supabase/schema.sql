@@ -9,7 +9,6 @@ create table if not exists settings (
   id uuid primary key default gen_random_uuid(),
   venue_name text not null default 'Padel Center',
   whatsapp_phone text not null default '',
-  default_price numeric not null default 8000,
   slot_duration_minutes int not null default 60,
   open_hour int not null default 8,
   close_hour int not null default 23
@@ -18,7 +17,7 @@ create table if not exists settings (
 create table if not exists courts (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  price numeric
+  price numeric not null default 8000
 );
 
 create table if not exists closed_dates (
@@ -175,10 +174,11 @@ alter publication supabase_realtime add table public.reservations;
 
 -- Seed: structural minimum so the app isn't empty on first load.
 -- Real reservations/sales/tournaments accumulate from actual use.
-insert into settings (venue_name, whatsapp_phone, default_price, slot_duration_minutes, open_hour, close_hour)
-values ('Padel Center', '5491122334455', 8000, 60, 8, 23);
+insert into settings (venue_name, whatsapp_phone, slot_duration_minutes, open_hour, close_hour)
+values ('Padel Center', '5491122334455', 60, 8, 23);
 
-insert into courts (name) values ('Cancha 1'), ('Cancha 2'), ('Cancha 3'), ('Cancha 4');
+insert into courts (name, price) values
+  ('Cancha 1', 8000), ('Cancha 2', 8000), ('Cancha 3', 8000), ('Cancha 4', 8000);
 
 insert into products (name, price) values
   ('Agua mineral', 1500),

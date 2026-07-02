@@ -5,7 +5,6 @@ import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { ErrorText } from '@/components/ErrorText'
 import { generateTimeLabels } from '@/lib/timeSlots'
-import { getTurnoPrice } from '@/lib/pricing'
 import type { ReservationStatus } from '@/types'
 import { todayKey } from '@/lib/format'
 
@@ -29,7 +28,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
   async function handleSubmit() {
     if (!courtId || !selectedCourt) return
     setSaving(true)
-    const priceTotal = getTurnoPrice(selectedCourt, settings)
+    const priceTotal = selectedCourt.price
     const saveError = await addReservation({
       courtId,
       date,

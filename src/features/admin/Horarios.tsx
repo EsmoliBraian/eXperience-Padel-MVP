@@ -12,6 +12,10 @@ export function Horarios() {
   const [open, setOpen] = useState(openHour)
   const [close, setClose] = useState(closeHour)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const dirty = open !== openHour || close !== closeHour
 
   const closedDates = useClosedDatesStore((s) => s.closedDates)
   const addClosedDate = useClosedDatesStore((s) => s.addClosedDate)
@@ -22,7 +26,14 @@ export function Horarios() {
 
   async function handleSave() {
     if (open >= close) return
-    await updateSettings({ openHour: open, closeHour: close })
+    setSaving(true)
+    const saveError = await updateSettings({ openHour: open, closeHour: close })
+    setSaving(false)
+    if (saveError) {
+      setError(saveError)
+      return
+    }
+    setError(null)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -79,12 +90,15 @@ export function Horarios() {
           <p className="mb-3 text-sm text-danger">La apertura debe ser anterior al cierre.</p>
         )}
 
+        <ErrorText error={error} />
+
         <button
           type="button"
           onClick={handleSave}
-          className="w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+          disabled={!dirty || open >= close || saving}
+          className="w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
         >
-          Guardar
+          {saving ? 'Guardando...' : 'Guardar'}
         </button>
 
         {saved && <p className="mt-2 text-sm text-success">Horarios actualizados.</p>}

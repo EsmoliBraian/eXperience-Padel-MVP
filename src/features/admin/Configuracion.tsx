@@ -1,21 +1,28 @@
 import { useState } from 'react'
 import { useSettingsStore } from '@/store/settingsStore'
-import { useCourtsStore } from '@/store/courtsStore'
+import { ErrorText } from '@/components/ErrorText'
 
 export function Configuracion() {
   const settings = useSettingsStore()
   const updateSettings = useSettingsStore((s) => s.updateSettings)
-  const courts = useCourtsStore((s) => s.courts)
-  const addCourt = useCourtsStore((s) => s.addCourt)
-  const updateCourt = useCourtsStore((s) => s.updateCourt)
-  const deleteCourt = useCourtsStore((s) => s.deleteCourt)
 
   const [venueName, setVenueName] = useState(settings.venueName)
   const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const dirty = venueName !== settings.venueName || whatsappPhone !== settings.whatsappPhone
+
   async function handleSave() {
-    await updateSettings({ venueName, whatsappPhone })
+    setSaving(true)
+    const saveError = await updateSettings({ venueName, whatsappPhone })
+    setSaving(false)
+    if (saveError) {
+      setError(saveError)
+      return
+    }
+    setError(null)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -43,48 +50,21 @@ export function Configuracion() {
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
           />
         </label>
-      </div>
 
-      <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-gray-300">Canchas</p>
-          <button
-            type="button"
-            onClick={() => addCourt(`Cancha ${courts.length + 1}`)}
-            className="text-xs text-primary-500 hover:underline"
-          >
-            + Agregar cancha
-          </button>
-        </div>
-
-        {courts.map((court) => (
-          <div key={court.id} className="flex items-center gap-2">
-            <input
-              value={court.name}
-              onChange={(e) => updateCourt(court.id, { name: e.target.value })}
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
-            />
-            <button
-              type="button"
-              onClick={() => deleteCourt(court.id)}
-              className="text-xs text-danger hover:underline"
-            >
-              Eliminar
-            </button>
-          </div>
-        ))}
-        {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
         <p className="text-xs text-gray-500">
-          El precio de cada cancha se configura en la seccion Reservas.
+          Las canchas y su precio se administran en la seccion Reservas.
         </p>
       </div>
+
+      <ErrorText error={error} />
 
       <button
         type="button"
         onClick={handleSave}
-        className="w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+        disabled={!dirty || saving}
+        className="w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
       >
-        Guardar configuracion
+        {saving ? 'Guardando...' : 'Guardar configuracion'}
       </button>
       {saved && <p className="text-sm text-success">Configuracion guardada.</p>}
     </div>
