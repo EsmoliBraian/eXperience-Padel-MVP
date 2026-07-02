@@ -172,12 +172,24 @@ export function Productos() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showCategories, setShowCategories] = useState(false)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+
+  const productCountByCategory = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of products) {
+      if (p.categoryId) counts.set(p.categoryId, (counts.get(p.categoryId) ?? 0) + 1)
+    }
+    return counts
+  }, [products])
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products
-    const q = searchQuery.trim().toLowerCase()
-    return products.filter((p) => p.name.toLowerCase().includes(q))
-  }, [products, searchQuery])
+    return products
+      .filter((p) => !selectedCategoryId || p.categoryId === selectedCategoryId)
+      .filter((p) => {
+        if (!searchQuery.trim()) return true
+        return p.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      })
+  }, [products, searchQuery, selectedCategoryId])
 
   async function handleAdd() {
     setError(await addProduct({ name: 'Nuevo producto', description: '', price: 0 }))
@@ -212,6 +224,36 @@ export function Productos() {
         className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100"
       />
 
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryId(null)}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              selectedCategoryId === null
+                ? 'bg-primary-500 text-gray-950'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Todas ({products.length})
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setSelectedCategoryId((prev) => (prev === c.id ? null : c.id))}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                selectedCategoryId === c.id
+                  ? 'bg-primary-500 text-gray-950'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {c.name} ({productCountByCategory.get(c.id) ?? 0})
+            </button>
+          ))}
+        </div>
+      )}
+
       <ErrorText error={error} />
 
       <div className="space-y-3">
@@ -220,7 +262,9 @@ export function Productos() {
         ))}
         {filteredProducts.length === 0 && (
           <p className="text-sm text-gray-500">
-            {products.length === 0 ? 'No hay productos cargados.' : 'Ningun producto coincide con la busqueda.'}
+            {products.length === 0
+              ? 'No hay productos cargados.'
+              : 'Ningun producto coincide con la busqueda o la categoria elegida.'}
           </p>
         )}
       </div>
