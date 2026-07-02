@@ -54,6 +54,7 @@ interface SalesState {
     payments: SalePayment[],
     reservationId?: string,
     customerName?: string,
+    reservationFee?: number,
   ) => Promise<string | null>
   settleSale: (
     id: string,
@@ -74,8 +75,9 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
     if (!error && data) set({ sales: data.map(fromRow) })
     set({ loading: false })
   },
-  addSale: async (items, paymentMethod, payments, reservationId, customerName) => {
-    const total = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
+  addSale: async (items, paymentMethod, payments, reservationId, customerName, reservationFee = 0) => {
+    const itemsTotal = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
+    const total = itemsTotal + reservationFee
     const date = toDateKey(new Date())
     const paymentStatus: PaymentStatus = paymentMethod ? 'pagado' : 'adeuda'
 
@@ -93,15 +95,17 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
       .single()
     if (saleError || !sale) return saleError?.message ?? 'No se pudo registrar la venta.'
 
-    const { error: itemsError } = await supabase.from('sale_items').insert(
-      items.map((item) => ({
-        sale_id: sale.id,
-        product_id: item.productId,
-        qty: item.qty,
-        unit_price: item.unitPrice,
-      })),
-    )
-    if (itemsError) return itemsError.message
+    if (items.length > 0) {
+      const { error: itemsError } = await supabase.from('sale_items').insert(
+        items.map((item) => ({
+          sale_id: sale.id,
+          product_id: item.productId,
+          qty: item.qty,
+          unit_price: item.unitPrice,
+        })),
+      )
+      if (itemsError) return itemsError.message
+    }
 
     if (paymentMethod === 'mixto' && payments.length > 0) {
       const { error: paymentsError } = await supabase.from('sale_payments').insert(

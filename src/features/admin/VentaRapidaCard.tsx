@@ -5,6 +5,7 @@ import { useReservationsStore } from '@/store/reservationsStore'
 import { formatCurrency, todayKey } from '@/lib/format'
 import { ErrorText } from '@/components/ErrorText'
 import { PaymentBreakdown } from '@/components/admin/PaymentBreakdown'
+import { SplitBillCalculator } from '@/components/admin/SplitBillCalculator'
 import type { PaymentMethod, SalePayment } from '@/types'
 
 type SaleMode = PaymentMethod | 'adeuda'
@@ -21,12 +22,12 @@ export function VentaRapidaCard() {
   const addSale = useSalesStore((s) => s.addSale)
   const reservations = useReservationsStore((s) => s.reservations)
 
+  const [linkedReservationId, setLinkedReservationId] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [mode, setMode] = useState<SaleMode>('efectivo')
   const [splitPayments, setSplitPayments] = useState<SalePayment[]>([])
   const [debtorName, setDebtorName] = useState('')
-  const [linkedReservationId, setLinkedReservationId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
@@ -39,6 +40,10 @@ export function VentaRapidaCard() {
     [reservations, today],
   )
 
+  const linkedReservation = todayReservations.find((r) => r.id === linkedReservationId)
+  const turnoFeeIncluded = linkedReservation?.status === 'confirmado'
+  const turnoFee = turnoFeeIncluded ? linkedReservation.priceTotal : 0
+
   const searchMatches = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.trim().toLowerCase()
@@ -46,7 +51,8 @@ export function VentaRapidaCard() {
   }, [products, searchQuery])
 
   const cartProducts = products.filter((p) => (quantities[p.id] ?? 0) > 0)
-  const cartTotal = cartProducts.reduce((sum, p) => sum + quantities[p.id] * p.price, 0)
+  const productsTotal = cartProducts.reduce((sum, p) => sum + quantities[p.id] * p.price, 0)
+  const grandTotal = productsTotal + turnoFee
 
   function handleAddProduct(productId: string) {
     setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
@@ -73,8 +79,8 @@ export function VentaRapidaCard() {
       qty: quantities[p.id],
       unitPrice: p.price,
     }))
-    if (items.length === 0) {
-      setError('Seleccioná al menos un producto.')
+    if (items.length === 0 && !turnoFeeIncluded) {
+      setError('Seleccioná al menos un producto o un turno confirmado.')
       return
     }
     if (mode === 'adeuda' && !debtorName.trim()) {
@@ -86,8 +92,8 @@ export function VentaRapidaCard() {
     const payments = mode === 'mixto' ? splitPayments.filter((p) => p.amount > 0) : []
     const saleError =
       mode === 'adeuda'
-        ? await addSale(items, null, [], linkedReservationId || undefined, debtorName.trim())
-        : await addSale(items, mode, payments, linkedReservationId || undefined)
+        ? await addSale(items, null, [], linkedReservationId || undefined, debtorName.trim(), turnoFee)
+        : await addSale(items, mode, payments, linkedReservationId || undefined, undefined, turnoFee)
     setConfirming(false)
 
     if (saleError) {
@@ -107,7 +113,32 @@ export function VentaRapidaCard() {
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
       <p className="mb-3 text-sm font-medium text-gray-300">Venta rapida</p>
 
-      <div className="relative">
+      <label className="block text-xs text-gray-400">
+        Vincular al turno
+        <select
+          value={linkedReservationId}
+          onChange={(e) => setLinkedReservationId(e.target.value)}
+          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+        >
+          <option value="">No vincular</option>
+          {todayReservations.map((r) => (
+            <option key={r.id} value={r.id}>
+              Vincular al turno: {r.time}hs{r.customerName ? ` - ${r.customerName}` : ''}
+              {r.status === 'confirmado' ? '' : ' (sin confirmar)'}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {linkedReservation && (
+        <p className="mt-1 text-xs text-gray-500">
+          {turnoFeeIncluded
+            ? `Cancha (turno confirmado): ${formatCurrency(turnoFee)} — incluido en el total`
+            : 'Este turno no esta confirmado todavia, no se incluye el precio de cancha.'}
+        </p>
+      )}
+
+      <div className="relative mt-3">
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,29 +188,17 @@ export function VentaRapidaCard() {
           </div>
         ))}
         {cartProducts.length === 0 && (
-          <p className="text-sm text-gray-500">Busca un producto para agregarlo.</p>
+          <p className="text-sm text-gray-500">Busca un producto para agregarlo (opcional).</p>
         )}
       </div>
 
-      <label className="mt-3 block text-xs text-gray-400">
-        Vincular al turno
-        <select
-          value={linkedReservationId}
-          onChange={(e) => setLinkedReservationId(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
-        >
-          <option value="">No vincular</option>
-          {todayReservations.map((r) => (
-            <option key={r.id} value={r.id}>
-              Vincular al turno: {r.time}hs{r.customerName ? ` - ${r.customerName}` : ''}
-            </option>
-          ))}
-        </select>
-      </label>
-
       <div className="mt-3 flex items-center justify-between text-sm">
         <span className="text-gray-400">Total</span>
-        <span className="font-semibold text-gray-50">{formatCurrency(cartTotal)}</span>
+        <span className="font-semibold text-gray-50">{formatCurrency(grandTotal)}</span>
+      </div>
+
+      <div className="mt-3">
+        <SplitBillCalculator total={grandTotal} />
       </div>
 
       <div className="mt-3 grid grid-cols-4 gap-2">
@@ -201,7 +220,7 @@ export function VentaRapidaCard() {
 
       {mode === 'mixto' && (
         <div className="mt-3">
-          <PaymentBreakdown payments={splitPayments} onChange={setSplitPayments} total={cartTotal} />
+          <PaymentBreakdown payments={splitPayments} onChange={setSplitPayments} total={grandTotal} />
         </div>
       )}
 

@@ -17,6 +17,7 @@ import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useProductsStore } from '@/store/productsStore'
 import { ChartCard } from '@/components/ChartCard'
+import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
 import { formatCurrency, toDateKey, weekdayShort } from '@/lib/format'
 import type { PaymentMethod } from '@/types'
 
@@ -39,20 +40,24 @@ export function Metricas() {
   const sales = useSalesStore((s) => s.sales)
   const products = useProductsStore((s) => s.products)
 
+  const feeAbsorbedReservationIds = useMemo(() => reservationIdsWithAbsorbedFee(sales), [sales])
+
   const last7Days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date()
       d.setDate(d.getDate() - (6 - i))
       const date = toDateKey(d)
       const reservationsTotal = reservations
-        .filter((r) => r.date === date && r.status !== 'cancelado')
+        .filter(
+          (r) => r.date === date && r.status !== 'cancelado' && !feeAbsorbedReservationIds.has(r.id),
+        )
         .reduce((sum, r) => sum + r.priceTotal, 0)
       const salesTotal = sales
         .filter((s) => s.date === date && s.paymentStatus === 'pagado')
         .reduce((sum, s) => sum + s.total, 0)
       return { label: weekdayShort(d), total: reservationsTotal + salesTotal }
     })
-  }, [reservations, sales])
+  }, [reservations, sales, feeAbsorbedReservationIds])
 
   const ingresos7dias = last7Days.reduce((sum, d) => sum + d.total, 0)
 

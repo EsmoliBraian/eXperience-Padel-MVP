@@ -5,6 +5,7 @@ import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { getAvailableSlots } from '@/lib/availability'
+import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
 import { formatCurrency, todayKey } from '@/lib/format'
 import { KpiCard } from '@/components/KpiCard'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -27,9 +28,12 @@ export function Dashboard() {
     [reservations, today],
   )
   const todaySales = useMemo(() => sales.filter((s) => s.date === today), [sales, today])
+  const feeAbsorbedReservationIds = useMemo(() => reservationIdsWithAbsorbedFee(sales), [sales])
 
   const ingresosHoy =
-    todayReservations.reduce((sum, r) => sum + r.priceTotal, 0) +
+    todayReservations
+      .filter((r) => !feeAbsorbedReservationIds.has(r.id))
+      .reduce((sum, r) => sum + r.priceTotal, 0) +
     todaySales
       .filter((s) => s.paymentStatus === 'pagado')
       .reduce((sum, s) => sum + s.total, 0)
