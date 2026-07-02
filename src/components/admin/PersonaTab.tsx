@@ -1,0 +1,82 @@
+import { useState } from 'react'
+import { SaleCheckoutForm } from '@/components/admin/SaleCheckoutForm'
+import { formatCurrency } from '@/lib/format'
+
+interface PersonaTabProps {
+  index: number
+  reservationId: string
+  courtFee: number
+  isCourtFeeAssigned: boolean
+  onToggleCourtFee: () => void
+}
+
+export function PersonaTab({
+  index,
+  reservationId,
+  courtFee,
+  isCourtFeeAssigned,
+  onToggleCourtFee,
+}: PersonaTabProps) {
+  const [name, setName] = useState(`Persona ${index + 1}`)
+  const [confirmedCharges, setConfirmedCharges] = useState<number[]>([])
+  const [showForm, setShowForm] = useState(true)
+  const [formKey, setFormKey] = useState(0)
+
+  function handleConfirmed(total: number) {
+    setConfirmedCharges((prev) => [...prev, total])
+    setShowForm(false)
+  }
+
+  function handleAddAnother() {
+    setFormKey((k) => k + 1)
+    setShowForm(true)
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-800 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1 text-sm font-medium text-gray-100"
+        />
+        {courtFee > 0 && (
+          <label className="flex shrink-0 items-center gap-1 text-xs text-gray-400">
+            <input type="checkbox" checked={isCourtFeeAssigned} onChange={onToggleCourtFee} />
+            Cancha
+          </label>
+        )}
+      </div>
+
+      {confirmedCharges.length > 0 && (
+        <div className="mb-2 space-y-1">
+          {confirmedCharges.map((total, i) => (
+            <p key={i} className="text-xs text-success">
+              Cobrado: {formatCurrency(total)}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {showForm ? (
+        <SaleCheckoutForm
+          key={formKey}
+          reservationId={reservationId}
+          extraFee={isCourtFeeAssigned ? courtFee : 0}
+          extraFeeLabel="Cancha"
+          defaultDebtorName={name}
+          confirmLabel="Cobrar"
+          onConfirmed={handleConfirmed}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={handleAddAnother}
+          className="text-xs text-primary-500 hover:underline"
+        >
+          + Agregar otra venta
+        </button>
+      )}
+    </div>
+  )
+}
