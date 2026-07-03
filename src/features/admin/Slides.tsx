@@ -136,7 +136,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
         <label className="block text-sm text-gray-400">
@@ -144,7 +144,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
           <input
             value={subtitle}
             onChange={(e) => setSubtitle(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">
@@ -153,7 +153,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="https://..."
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">

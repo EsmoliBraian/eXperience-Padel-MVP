@@ -5,6 +5,7 @@ import { PublicVenueLayout } from '@/features/booking/PublicVenueLayout'
 import { UserHomePage } from '@/features/booking/UserHomePage'
 import { BookingFlowPage } from '@/features/booking/BookingFlowPage'
 import { TorneosPage } from '@/features/booking/TorneosPage'
+import { RankingPage } from '@/features/booking/RankingPage'
 import { ProtectedRoute } from '@/features/admin/ProtectedRoute'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
@@ -33,6 +34,9 @@ const Slides = lazy(() => import('@/features/admin/Slides').then((m) => ({ defau
 const Torneos = lazy(() =>
   import('@/features/admin/Torneos').then((m) => ({ default: m.Torneos })),
 )
+const Ranking = lazy(() =>
+  import('@/features/admin/Ranking').then((m) => ({ default: m.Ranking })),
+)
 const Productos = lazy(() =>
   import('@/features/admin/Productos').then((m) => ({ default: m.Productos })),
 )
@@ -48,7 +52,7 @@ const Configuracion = lazy(() =>
 
 function AdminFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
+    <div className="flex min-h-screen items-center justify-center text-gray-400">
       Cargando...
     </div>
   )
@@ -69,6 +73,7 @@ function App() {
             <Route index element={<UserHomePage />} />
             <Route path="reservar" element={<BookingFlowPage />} />
             <Route path="torneos" element={<TorneosPage />} />
+            <Route path="ranking" element={<RankingPage />} />
           </Route>
 
           <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -87,6 +92,7 @@ function App() {
             <Route path="horarios" element={<Horarios />} />
             <Route path="slides" element={<Slides />} />
             <Route path="torneos" element={<Torneos />} />
+            <Route path="ranking" element={<Ranking />} />
             <Route path="productos" element={<Productos />} />
             <Route path="ventas" element={<VentasDelDia />} />
             <Route path="metricas" element={<Metricas />} />

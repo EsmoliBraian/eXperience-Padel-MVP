@@ -40,7 +40,7 @@ function DuracionTurnoPanel() {
           type="number"
           value={duration}
           onChange={(e) => setDuration(Number(e.target.value))}
-          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
         />
       </label>
 
@@ -88,13 +88,13 @@ function CanchaRow({ court }: { court: Court }) {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
         />
         <input
           type="number"
           value={price}
           onChange={(e) => setPrice(Number(e.target.value))}
-          className="w-32 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+          className="w-32 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
         />
         <button
           type="button"
@@ -159,14 +159,14 @@ function CanchasPanel() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nombre de la cancha"
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
         />
         <input
           type="number"
           value={newPrice}
           onChange={(e) => setNewPrice(e.target.value)}
           placeholder="Precio"
-          className="w-32 rounded-lg border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
+          className="w-32 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
         />
         <button
           type="button"
@@ -259,7 +259,7 @@ export function Reservas() {
                   <select
                     value={r.status}
                     onChange={(e) => updateStatus(r.id, e.target.value as ReservationStatus)}
-                    className="rounded-lg border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-gray-100"
+                    className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1 text-xs text-gray-100"
                   >
                     <option value="reservado">Reservado</option>
                     <option value="confirmado">Confirmado</option>

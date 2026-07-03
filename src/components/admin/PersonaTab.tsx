@@ -46,7 +46,7 @@ export function PersonaTab({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1 text-sm font-medium text-gray-100"
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-2 py-1 text-sm font-medium text-gray-100"
         />
         {courtFee > 0 && !courtFeeAlreadyCharged && (
           <label className="flex shrink-0 items-center gap-1 text-xs text-gray-400">

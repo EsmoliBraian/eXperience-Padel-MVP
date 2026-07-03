@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/format'
 import { ErrorText } from '@/components/ErrorText'
 import { PaymentBreakdown } from '@/components/admin/PaymentBreakdown'
 import { SplitBillCalculator } from '@/components/admin/SplitBillCalculator'
+import { PAYMENT_COLORS } from '@/lib/paymentColors'
 import type { PaymentMethod, SalePayment } from '@/types'
 
 type SaleMode = PaymentMethod | 'adeuda'
@@ -124,7 +125,7 @@ export function SaleCheckoutForm({
               setShowAllProducts(false)
             }}
             placeholder="Buscar producto..."
-            className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+            className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
           />
           <button
             type="button"
@@ -140,7 +141,7 @@ export function SaleCheckoutForm({
           </button>
         </div>
         {visibleProducts.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 shadow-lg">
+          <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 shadow-lg">
             {visibleProducts.map((p) => (
               <button
                 key={p.id}
@@ -210,11 +211,18 @@ export function SaleCheckoutForm({
             key={m}
             type="button"
             onClick={() => handleSelectMode(m)}
-            className={`rounded-lg border py-1.5 text-xs ${
-              mode === m
-                ? 'border-primary-500 bg-primary-500/10 text-primary-500'
-                : 'border-gray-800 text-gray-400'
+            className={`rounded-lg border py-1.5 text-xs font-medium ${
+              mode === m ? '' : 'border-gray-800 text-gray-400'
             }`}
+            style={
+              mode === m
+                ? {
+                    borderColor: PAYMENT_COLORS[m],
+                    backgroundColor: `${PAYMENT_COLORS[m]}1A`,
+                    color: PAYMENT_COLORS[m],
+                  }
+                : undefined
+            }
           >
             {MODE_LABELS[m]}
           </button>
@@ -234,7 +242,7 @@ export function SaleCheckoutForm({
             value={debtorName}
             onChange={(e) => setDebtorName(e.target.value)}
             placeholder="Quien se lo lleva fiado"
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
           />
         </label>
       )}

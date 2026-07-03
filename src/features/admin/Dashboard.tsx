@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
@@ -7,12 +7,12 @@ import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { getAvailableSlots } from '@/lib/availability'
 import { generateTimeLabels } from '@/lib/timeSlots'
 import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
-import { formatCurrency, todayKey } from '@/lib/format'
+import { formatCurrency, formatLongDate, fromDateKey, todayKey, toDateKey } from '@/lib/format'
 import { KpiCard } from '@/components/KpiCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { NuevaReservaModal } from './NuevaReservaModal'
-import { VentaRapidaCard } from './VentaRapidaCard'
-import { AcreedoresCard } from './AcreedoresCard'
+import { VentaRapidaCard, type VentaRapidaCardHandle } from './VentaRapidaCard'
+import { FiadoCard } from './FiadoCard'
 
 export function Dashboard() {
   const settings = useSettingsStore()
@@ -22,11 +22,17 @@ export function Dashboard() {
   const closedDates = useClosedDatesStore((s) => s.closedDates)
 
   const [showModal, setShowModal] = useState(false)
+  const [gridDate, setGridDate] = useState(todayKey())
+  const ventaRapidaRef = useRef<VentaRapidaCardHandle>(null)
 
   const today = todayKey()
   const todayReservations = useMemo(
     () => reservations.filter((r) => r.date === today && r.status !== 'cancelado'),
     [reservations, today],
+  )
+  const gridReservations = useMemo(
+    () => reservations.filter((r) => r.date === gridDate && r.status !== 'cancelado'),
+    [reservations, gridDate],
   )
   const todaySales = useMemo(() => sales.filter((s) => s.date === today), [sales, today])
   const feeAbsorbedReservationIds = useMemo(() => reservationIdsWithAbsorbedFee(sales), [sales])
@@ -42,6 +48,12 @@ export function Dashboard() {
     (sum, s) => sum + s.items.reduce((itemSum, item) => itemSum + item.qty, 0),
     0,
   )
+  function shiftGridDate(days: number) {
+    const d = fromDateKey(gridDate)
+    d.setDate(d.getDate() + days)
+    setGridDate(toDateKey(d))
+  }
+
   const turnosDisponiblesHoy = getAvailableSlots(
     settings,
     courts,
@@ -66,21 +78,77 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Reservas hoy" value={String(todayReservations.length)} />
-        <KpiCard label="Ingresos hoy" value={formatCurrency(ingresosHoy)} />
-        <KpiCard label="Productos vendidos" value={String(productosVendidosHoy)} />
-        <KpiCard label="Turnos disponibles hoy" value={String(turnosDisponiblesHoy)} />
+        <KpiCard
+          label="Reservas hoy"
+          value={String(todayReservations.length)}
+          icon="fa-calendar-check"
+          accentColor="#22E6B8"
+        />
+        <KpiCard
+          label="Ingresos hoy"
+          value={formatCurrency(ingresosHoy)}
+          icon="fa-sack-dollar"
+          accentColor="#22E6B8"
+        />
+        <KpiCard
+          label="Productos vendidos"
+          value={String(productosVendidosHoy)}
+          icon="fa-cart-shopping"
+          accentColor="#66D18F"
+        />
+        <KpiCard
+          label="Turnos disponibles hoy"
+          value={String(turnosDisponiblesHoy)}
+          icon="fa-clock"
+          accentColor="#FFC857"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="overflow-x-auto rounded-xl border border-gray-800 bg-gray-900 p-4 lg:col-span-2">
-          <p className="mb-3 text-sm font-medium text-gray-300">Reservas del dia</p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-gray-300">Reservas del dia</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => shiftGridDate(-1)}
+                aria-label="Dia anterior"
+                className="rounded-lg border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-800"
+              >
+                &larr;
+              </button>
+              <input
+                type="date"
+                value={gridDate}
+                onChange={(e) => e.target.value && setGridDate(e.target.value)}
+                className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1 text-xs text-gray-100"
+              />
+              <button
+                type="button"
+                onClick={() => shiftGridDate(1)}
+                aria-label="Dia siguiente"
+                className="rounded-lg border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-800"
+              >
+                &rarr;
+              </button>
+              {gridDate !== today && (
+                <button
+                  type="button"
+                  onClick={() => setGridDate(today)}
+                  className="rounded-lg border border-primary-500 px-2 py-1 text-xs text-primary-500 hover:bg-primary-500/10"
+                >
+                  Hoy
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="mb-2 text-xs text-gray-500">{formatLongDate(fromDateKey(gridDate))}</p>
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-left text-gray-500">
-                <th className="pb-2 pr-2">Hora</th>
+              <tr className="text-left text-gray-400">
+                <th className="pb-3 pr-3 font-semibold">Hora</th>
                 {courts.map((c) => (
-                  <th key={c.id} className="pb-2 pr-2">
+                  <th key={c.id} className="pb-3 pr-3 font-semibold">
                     {c.name}
                   </th>
                 ))}
@@ -89,23 +157,30 @@ export function Dashboard() {
             <tbody>
               {times.map((time) => {
                 return (
-                  <tr key={time} className="border-t border-gray-800">
-                    <td className="py-2 pr-2 text-gray-500">{time}</td>
+                  <tr key={time} className="border-t border-gray-800/60 hover:bg-gray-800/40">
+                    <td className="py-3 pr-3 text-gray-500">{time}</td>
                     {courts.map((court) => {
-                      const reservation = todayReservations.find(
+                      const reservation = gridReservations.find(
                         (r) => r.courtId === court.id && r.time === time,
                       )
                       return (
-                        <td key={court.id} className="py-2 pr-2">
+                        <td key={court.id} className="py-3 pr-3">
                           {reservation ? (
-                            <div className="space-y-0.5">
+                            <button
+                              type="button"
+                              onClick={() => ventaRapidaRef.current?.openReservation(reservation.id)}
+                              className="space-y-0.5 text-left hover:opacity-80"
+                              title="Abrir en Venta rapida"
+                            >
                               <StatusBadge status={reservation.status} />
                               {reservation.customerName && (
                                 <p className="text-gray-400">{reservation.customerName}</p>
                               )}
-                            </div>
+                            </button>
                           ) : (
-                            <span className="text-gray-700">Disponible</span>
+                            <span className="rounded-full bg-[#24262A] px-2 py-0.5 text-[#A7ADB6]">
+                              Disponible
+                            </span>
                           )}
                         </td>
                       )
@@ -118,11 +193,11 @@ export function Dashboard() {
         </div>
 
         <div className="space-y-4">
-          <VentaRapidaCard />
+          <VentaRapidaCard ref={ventaRapidaRef} />
         </div>
       </div>
 
-      <AcreedoresCard />
+      <FiadoCard />
 
       {showModal && <NuevaReservaModal onClose={() => setShowModal(false)} />}
     </div>

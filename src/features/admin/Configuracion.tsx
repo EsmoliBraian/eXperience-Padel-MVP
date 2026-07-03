@@ -68,7 +68,7 @@ export function Configuracion() {
             <input
               readOnly
               value={bookingLink}
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
             />
             <button
               type="button"
@@ -87,7 +87,7 @@ export function Configuracion() {
           <input
             value={venueName}
             onChange={(e) => setVenueName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 
@@ -97,7 +97,7 @@ export function Configuracion() {
             value={whatsappPhone}
             onChange={(e) => setWhatsappPhone(e.target.value)}
             placeholder="5491122334455"
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 

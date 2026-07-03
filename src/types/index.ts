@@ -94,3 +94,25 @@ export interface HeroSlide {
   order: number
   published: boolean
 }
+
+export type RankingInstance =
+  | 'fase_grupos'
+  | 'dieciseisavos'
+  | 'octavos'
+  | 'cuartos'
+  | 'semis'
+  | 'finalista'
+  | 'campeon'
+
+export interface RankingCategory {
+  id: string
+  name: string
+}
+
+export interface RankingEntry {
+  id: string
+  categoryId: string
+  playerName: string
+  totalPoints: number
+  bestInstance: RankingInstance
+}

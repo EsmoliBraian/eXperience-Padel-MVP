@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    @apply text-gray-100 antialiased;
+    background: linear-gradient(180deg, #17181c 0%, #141518 35%, #121212 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -12,8 +19,37 @@
   ::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
 
   input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(1);
     cursor: pointer;
+  }
+
+  /* Native <option> lists ignore page CSS in some browsers unless styled
+     explicitly, even with color-scheme set — without this they can render
+     with a white background and inherited light text (invisible). */
+  select option {
+    @apply bg-gray-925 text-gray-100;
+  }
+
+  /* Browser autofill (Chrome/Edge) paints its own white/yellow background
+     and ignores our input background, so force it back to the input's
+     colors instead of leaving light text unreadable on that background. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: theme('colors.gray.100');
+    -webkit-box-shadow: 0 0 0px 1000px theme('colors.gray.925') inset;
+    box-shadow: 0 0 0px 1000px theme('colors.gray.925') inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  ::selection {
+    background-color: theme('colors.primary.500');
+    color: theme('colors.gray.950');
+  }
+
+  button, a, input, select, textarea, [class*='hover:'] {
+    transition-property: background-color, border-color, color, opacity, box-shadow;
+    transition-duration: 180ms;
+    transition-timing-function: ease;
   }
 }
 

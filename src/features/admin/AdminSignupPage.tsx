@@ -44,7 +44,7 @@ export function AdminSignupPage() {
 
   if (awaitingConfirmation) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-xl border border-gray-800 bg-gray-900 p-6 text-center">
           <h1 className="mb-3 text-lg font-semibold text-gray-50">Confirma tu email</h1>
           <p className="text-sm text-gray-400">
@@ -60,7 +60,7 @@ export function AdminSignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-gray-800 bg-gray-900 p-6"
@@ -73,7 +73,7 @@ export function AdminSignupPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
 
@@ -83,7 +83,7 @@ export function AdminSignupPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
 
@@ -93,7 +93,7 @@ export function AdminSignupPage() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
 

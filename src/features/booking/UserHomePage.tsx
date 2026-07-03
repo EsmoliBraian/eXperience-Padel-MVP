@@ -29,7 +29,7 @@ export function UserHomePage() {
   const hero = sortedSlides.length > 0 ? sortedSlides[heroIndex % sortedSlides.length] : undefined
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col p-5">
       <div className="mb-1 flex items-center gap-2 text-sm text-gray-400">
         {logoUrl ? (
           <img src={logoUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
@@ -80,6 +80,13 @@ export function UserHomePage() {
         className="mt-6 rounded-lg bg-primary-500 py-3 text-center font-medium text-gray-950 shadow-glow-primary hover:bg-primary-400"
       >
         VER HORARIOS
+      </Link>
+
+      <Link
+        to={`/${venueSlug}/ranking`}
+        className="mt-2 rounded-lg border border-gray-800 py-2.5 text-center text-sm font-medium text-gray-300 hover:bg-gray-900"
+      >
+        VER RANKING
       </Link>
 
       <div className="mt-8">

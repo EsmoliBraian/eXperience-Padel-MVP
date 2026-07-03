@@ -10,10 +10,12 @@ import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { useCategoriesStore } from '@/store/categoriesStore'
+import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
+import { useRankingStore } from '@/store/rankingStore'
 
 function AdminFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
+    <div className="flex min-h-screen items-center justify-center text-gray-400">
       Cargando...
     </div>
   )
@@ -22,20 +24,20 @@ function AdminFallback() {
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const authInitialized = useAdminAuthStore((s) => s.initialized)
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated)
-  const session = useAdminAuthStore((s) => s.session)
+  const userId = useAdminAuthStore((s) => s.session?.user.id)
   const venueId = useSettingsStore((s) => s.id)
 
   const [venueResolved, setVenueResolved] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated || !session) return
+    if (!isAuthenticated || !userId) return
     setVenueResolved(false)
     useSettingsStore
       .getState()
-      .fetchSettingsForOwner(session.user.id)
+      .fetchSettingsForOwner(userId)
       .then(() => setVenueResolved(true))
-  }, [isAuthenticated, session])
+  }, [isAuthenticated, userId])
 
   useEffect(() => {
     if (!venueResolved || !venueId) return
@@ -49,6 +51,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       useSlidesStore.getState().fetchSlides(),
       useClosedDatesStore.getState().fetchClosedDates(),
       useCategoriesStore.getState().fetchCategories(),
+      useRankingCategoriesStore.getState().fetchCategories(),
+      useRankingStore.getState().fetchPoints(),
+      useRankingStore.getState().fetchEntries(),
     ]).then(() => setHydrated(true))
 
     const unsubscribeReservations = useReservationsStore.getState().subscribeToChanges()

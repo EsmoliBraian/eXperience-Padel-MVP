@@ -150,7 +150,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
             />
           </label>
           <label className="block text-sm text-gray-400">
@@ -159,7 +159,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
             />
           </label>
           <label className="block text-sm text-gray-400 sm:col-span-2">
@@ -167,7 +167,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
               rows={2}
             />
           </label>
@@ -177,7 +177,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://..."
-              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+              className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
             />
           </label>
           <label className="block text-sm text-gray-400">

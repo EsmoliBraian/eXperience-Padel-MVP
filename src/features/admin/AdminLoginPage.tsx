@@ -26,7 +26,7 @@ export function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-gray-800 bg-gray-900 p-6"
@@ -39,7 +39,7 @@ export function AdminLoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
 
@@ -49,7 +49,7 @@ export function AdminLoginPage() {
             type="password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100 outline-none focus:border-primary-500"
           />
         </label>
 

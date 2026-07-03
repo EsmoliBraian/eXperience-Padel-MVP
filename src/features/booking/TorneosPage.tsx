@@ -11,7 +11,7 @@ export function TorneosPage() {
     .sort((a, b) => a.date.localeCompare(b.date))
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col p-5">
       <Link to={`/${venueSlug}`} className="mb-4 text-sm text-gray-400">
         &larr; Volver
       </Link>

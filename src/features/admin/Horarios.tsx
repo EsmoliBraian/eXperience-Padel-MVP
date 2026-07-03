@@ -61,7 +61,7 @@ export function Horarios() {
           <select
             value={open}
             onChange={(e) => setOpen(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             {Array.from({ length: 24 }, (_, h) => h).map((h) => (
               <option key={h} value={h}>
@@ -76,7 +76,7 @@ export function Horarios() {
           <select
             value={close}
             onChange={(e) => setClose(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             {Array.from({ length: 25 }, (_, h) => h).map((h) => (
               <option key={h} value={h}>
@@ -133,13 +133,13 @@ export function Horarios() {
             type="date"
             value={newClosedDate}
             onChange={(e) => setNewClosedDate(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+            className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
           />
           <input
             value={newClosedReason}
             onChange={(e) => setNewClosedReason(e.target.value)}
             placeholder="Motivo (opcional)"
-            className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100"
+            className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
           />
           <ErrorText error={closedDateError} />
           <button

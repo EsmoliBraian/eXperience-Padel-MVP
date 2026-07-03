@@ -19,19 +19,15 @@ import { useProductsStore } from '@/store/productsStore'
 import { ChartCard } from '@/components/ChartCard'
 import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
 import { formatCurrency, toDateKey, weekdayShort } from '@/lib/format'
+import { PAYMENT_COLORS } from '@/lib/paymentColors'
 import type { PaymentMethod } from '@/types'
 
-const PAYMENT_COLORS: Record<PaymentMethod, string> = {
-  efectivo: '#15F5BA',
-  transferencia: '#38BDF8',
-  mixto: '#FB923C',
-}
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   efectivo: 'Efectivo',
   transferencia: 'Transferencia',
   mixto: 'Mixto',
 }
-const OCCUPANCY_COLORS = ['#15F5BA', '#363636']
+const OCCUPANCY_COLORS = ['#22E6B8', '#2A2C31']
 
 export function Metricas() {
   const settings = useSettingsStore()
@@ -107,18 +103,18 @@ export function Metricas() {
         <ChartCard title={`Ingresos (ultimos 7 dias) — ${formatCurrency(ingresos7dias)}`}>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={last7Days}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#252525" />
-              <XAxis dataKey="label" stroke="#777777" fontSize={12} />
-              <YAxis stroke="#777777" fontSize={12} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#383A40" />
+              <XAxis dataKey="label" stroke="#94979E" fontSize={12} />
+              <YAxis stroke="#94979E" fontSize={12} />
               <Tooltip
-                contentStyle={{ background: '#1A1A1A', border: '1px solid #363636' }}
+                contentStyle={{ background: '#222325', border: '1px solid #393B42' }}
                 formatter={(value) => formatCurrency(Number(value))}
               />
               <Area
                 type="monotone"
                 dataKey="total"
-                stroke="#15F5BA"
-                fill="#15F5BA"
+                stroke="#22E6B8"
+                fill="#22E6B8"
                 fillOpacity={0.2}
               />
             </AreaChart>
@@ -140,7 +136,7 @@ export function Metricas() {
                   <Cell key={entry.name} fill={OCCUPANCY_COLORS[index]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1A1A1A', border: '1px solid #363636' }} />
+              <Tooltip contentStyle={{ background: '#222325', border: '1px solid #393B42' }} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -170,7 +166,7 @@ export function Metricas() {
                     <Cell key={entry.method} fill={PAYMENT_COLORS[entry.method]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: '#1A1A1A', border: '1px solid #363636' }} />
+                <Tooltip contentStyle={{ background: '#222325', border: '1px solid #393B42' }} />
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-1 text-sm">

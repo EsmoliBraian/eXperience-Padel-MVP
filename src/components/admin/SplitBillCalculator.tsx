@@ -68,7 +68,7 @@ export function SplitBillCalculator({ total }: SplitBillCalculatorProps) {
           value={customCount}
           onChange={(e) => handleCustomCountChange(e.target.value)}
           placeholder="Otra cantidad"
-          className="w-28 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+          className="w-28 rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
         />
       </div>
 
@@ -112,7 +112,7 @@ export function SplitBillCalculator({ total }: SplitBillCalculatorProps) {
                           type="number"
                           value={percentages[i] ?? 0}
                           onChange={(e) => updatePercentage(i, Number(e.target.value))}
-                          className="w-14 rounded border border-gray-700 bg-gray-950 px-1 py-0.5 text-right text-gray-100"
+                          className="w-14 rounded border border-gray-700 bg-gray-925 px-1 py-0.5 text-right text-gray-100"
                         />
                         <span>%</span>
                       </div>

@@ -31,12 +31,12 @@ export function PaymentBreakdown({ payments, onChange, total }: PaymentBreakdown
             value={p.amount}
             onChange={(e) => updateRow(i, { amount: Number(e.target.value) })}
             placeholder="Monto"
-            className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+            className="w-full min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
           />
           <select
             value={p.method}
             onChange={(e) => updateRow(i, { method: e.target.value as SalePayment['method'] })}
-            className="rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+            className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
           >
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>

@@ -6,6 +6,8 @@ import { useReservationsStore } from '@/store/reservationsStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
+import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
+import { useRankingStore } from '@/store/rankingStore'
 
 export function PublicVenueLayout() {
   const { venueSlug } = useParams()
@@ -36,6 +38,8 @@ export function PublicVenueLayout() {
           useTournamentsStore.getState().fetchTournaments(),
           useSlidesStore.getState().fetchSlides(),
           useClosedDatesStore.getState().fetchClosedDates(),
+          useRankingCategoriesStore.getState().fetchCategories(),
+          useRankingStore.getState().fetchEntries(),
         ]).then(() => {
           if (cancelled) return
           unsubscribeRef.current = useReservationsStore.getState().subscribeToChanges()
@@ -52,14 +56,14 @@ export function PublicVenueLayout() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
+      <div className="flex min-h-screen items-center justify-center text-gray-400">
         Cargando...
       </div>
     )
   }
   if (status === 'not-found') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-gray-950 text-gray-400">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2 text-gray-400">
         <p className="text-lg text-gray-200">Club no encontrado</p>
         <p className="text-sm">Revisa el link e intenta de nuevo.</p>
       </div>

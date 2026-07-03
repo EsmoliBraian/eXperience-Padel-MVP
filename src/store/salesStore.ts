@@ -62,6 +62,8 @@ interface SalesState {
     paymentMethod: PaymentMethod,
     payments: SalePayment[],
   ) => Promise<string | null>
+  deleteSale: (id: string) => Promise<string | null>
+  updateSaleItems: (id: string, items: SaleItem[]) => Promise<string | null>
 }
 
 export const useSalesStore = create<SalesState>()((set, get) => ({
@@ -167,6 +169,46 @@ export const useSalesStore = create<SalesState>()((set, get) => ({
             }
           : s,
       ),
+    })
+    return null
+  },
+  deleteSale: async (id) => {
+    const { error } = await supabase.from('sales').delete().eq('id', id)
+    if (error) return error.message
+    set({ sales: get().sales.filter((s) => s.id !== id) })
+    return null
+  },
+  updateSaleItems: async (id, items) => {
+    const venueId = useSettingsStore.getState().id
+    if (!venueId) return 'No hay club activo.'
+    const sale = get().sales.find((s) => s.id === id)
+    if (!sale) return 'No se encontro la venta.'
+
+    const currentItemsTotal = sale.items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0)
+    const extraFee = sale.total - currentItemsTotal
+    const newTotal = items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0) + extraFee
+
+    const { error: deleteError } = await supabase.from('sale_items').delete().eq('sale_id', id)
+    if (deleteError) return deleteError.message
+
+    if (items.length > 0) {
+      const { error: insertError } = await supabase.from('sale_items').insert(
+        items.map((item) => ({
+          venue_id: venueId,
+          sale_id: id,
+          product_id: item.productId,
+          qty: item.qty,
+          unit_price: item.unitPrice,
+        })),
+      )
+      if (insertError) return insertError.message
+    }
+
+    const { error: totalError } = await supabase.from('sales').update({ total: newTotal }).eq('id', id)
+    if (totalError) return totalError.message
+
+    set({
+      sales: get().sales.map((s) => (s.id === id ? { ...s, items, total: newTotal } : s)),
     })
     return null
   },

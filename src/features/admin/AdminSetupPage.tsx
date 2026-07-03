@@ -12,7 +12,7 @@ type CheckStatus = 'idle' | 'checking' | 'available' | 'taken'
 export function AdminSetupPage() {
   const authInitialized = useAdminAuthStore((s) => s.initialized)
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated)
-  const session = useAdminAuthStore((s) => s.session)
+  const userId = useAdminAuthStore((s) => s.session?.user.id)
   const createVenue = useSettingsStore((s) => s.createVenue)
   const navigate = useNavigate()
 
@@ -28,15 +28,15 @@ export function AdminSetupPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated || !session) return
+    if (!isAuthenticated || !userId) return
     useSettingsStore
       .getState()
-      .fetchSettingsForOwner(session.user.id)
+      .fetchSettingsForOwner(userId)
       .then(() => {
         setHasVenue(!!useSettingsStore.getState().id)
         setCheckingExistingVenue(false)
       })
-  }, [isAuthenticated, session])
+  }, [isAuthenticated, userId])
 
   useEffect(() => {
     if (!slugEditedManually) setSlug(slugify(venueName))
@@ -57,7 +57,7 @@ export function AdminSetupPage() {
 
   if (!authInitialized || checkingExistingVenue) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
+      <div className="flex min-h-screen items-center justify-center text-gray-400">
         Cargando...
       </div>
     )
@@ -66,7 +66,7 @@ export function AdminSetupPage() {
   if (hasVenue) return <Navigate to="/admin" replace />
 
   async function handleSubmit() {
-    if (!session) return
+    if (!userId) return
     if (!venueName.trim() || !slug.trim()) {
       setError('Completa el nombre del club y el link.')
       return
@@ -78,7 +78,7 @@ export function AdminSetupPage() {
 
     setSubmitting(true)
     const createError = await createVenue({
-      ownerId: session.user.id,
+      ownerId: userId,
       slug,
       venueName: venueName.trim(),
       whatsappPhone,
@@ -95,7 +95,7 @@ export function AdminSetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-xl border border-gray-800 bg-gray-900 p-6">
         <h1 className="mb-2 text-lg font-semibold text-gray-50">Configura tu club</h1>
         <p className="mb-6 text-sm text-gray-400">
@@ -108,13 +108,13 @@ export function AdminSetupPage() {
             value={venueName}
             onChange={(e) => setVenueName(e.target.value)}
             placeholder="Padel Center"
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 
         <label className="mb-1 block text-sm text-gray-400">
           Tu link
-          <div className="mt-1 flex items-center rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100">
+          <div className="mt-1 flex items-center rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100">
             <span className="text-gray-500">.../</span>
             <input
               value={slug}
@@ -139,7 +139,7 @@ export function AdminSetupPage() {
             value={whatsappPhone}
             onChange={(e) => setWhatsappPhone(e.target.value)}
             placeholder="5491122334455"
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 

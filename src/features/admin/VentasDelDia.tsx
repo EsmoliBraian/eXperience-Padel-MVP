@@ -83,12 +83,12 @@ export function VentasDelDia() {
       <div className="overflow-x-auto rounded-xl border border-gray-800 bg-gray-900">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800 text-left text-gray-500">
-              <th className="p-3">Productos / Persona</th>
-              <th className="p-3">Turno</th>
-              <th className="p-3">Estado</th>
-              <th className="p-3">Metodo de pago</th>
-              <th className="p-3">Total</th>
+            <tr className="border-b border-gray-800 text-left text-xs font-semibold text-gray-400">
+              <th className="p-4">Productos / Persona</th>
+              <th className="p-4">Turno</th>
+              <th className="p-4">Estado</th>
+              <th className="p-4">Metodo de pago</th>
+              <th className="p-4">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -101,14 +101,14 @@ export function VentasDelDia() {
 
               return (
                 <Fragment key={reservationId}>
-                  <tr className="border-b border-gray-800">
-                    <td className="p-3 text-gray-300">
+                  <tr className="border-b border-gray-800 hover:bg-gray-800/40">
+                    <td className="p-4 text-gray-300">
                       Turno ({groupSales.length} persona{groupSales.length > 1 ? 's' : ''})
                     </td>
-                    <td className="p-3 text-gray-300">
+                    <td className="p-4 text-gray-300">
                       {reservation ? `${reservation.time}hs` : '-'}
                     </td>
-                    <td className="p-3">
+                    <td className="p-4">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           allPaid
@@ -121,8 +121,8 @@ export function VentasDelDia() {
                         {allPaid ? 'Pagado' : anyAdeuda ? 'Con deuda' : 'Parcial'}
                       </span>
                     </td>
-                    <td className="p-3 text-gray-300">Varios</td>
-                    <td className="p-3 text-gray-100">
+                    <td className="p-4 text-gray-300">Varios</td>
+                    <td className="p-4 text-gray-100">
                       {formatCurrency(combinedTotal)}
                       <button
                         type="button"
@@ -167,12 +167,12 @@ export function VentasDelDia() {
             })}
 
             {standalone.map((sale) => (
-              <tr key={sale.id} className="border-b border-gray-800 last:border-0">
-                <td className="p-3 text-gray-300">
+              <tr key={sale.id} className="border-b border-gray-800 last:border-0 hover:bg-gray-800/40">
+                <td className="p-4 text-gray-300">
                   {sale.items.map((item) => `${item.qty}x ${productName(item.productId)}`).join(', ')}
                 </td>
-                <td className="p-3 text-gray-300">-</td>
-                <td className="p-3">
+                <td className="p-4 text-gray-300">-</td>
+                <td className="p-4">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       sale.paymentStatus === 'pagado'
@@ -183,7 +183,7 @@ export function VentasDelDia() {
                     {sale.paymentStatus === 'pagado' ? 'Pagado' : `Adeuda${sale.customerName ? ` - ${sale.customerName}` : ''}`}
                   </span>
                 </td>
-                <td className="p-3 text-gray-300">
+                <td className="p-4 text-gray-300">
                   {sale.paymentMethod ? PAYMENT_LABELS[sale.paymentMethod] : '-'}
                   {sale.paymentMethod === 'mixto' && sale.payments.length > 0 && (
                     <ul className="mt-1 text-xs text-gray-500">
@@ -195,7 +195,7 @@ export function VentasDelDia() {
                     </ul>
                   )}
                 </td>
-                <td className="p-3 text-gray-100">{formatCurrency(sale.total)}</td>
+                <td className="p-4 text-gray-100">{formatCurrency(sale.total)}</td>
               </tr>
             ))}
 

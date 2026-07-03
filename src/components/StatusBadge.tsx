@@ -1,13 +1,13 @@
 import type { ReservationStatus } from '@/types'
 
 const STYLES: Record<ReservationStatus, string> = {
-  reservado: 'bg-warning/20 text-warning',
-  confirmado: 'bg-success/20 text-success',
-  cancelado: 'bg-danger/20 text-danger',
+  reservado: 'bg-warning-bg text-warning border border-warning-border/40',
+  confirmado: 'bg-primary-500 text-gray-950',
+  cancelado: 'bg-danger-bg text-danger border border-danger-border/40',
 }
 
 const LABELS: Record<ReservationStatus, string> = {
-  reservado: 'Reservado',
+  reservado: 'Pendiente',
   confirmado: 'Confirmado',
   cancelado: 'Cancelado',
 }

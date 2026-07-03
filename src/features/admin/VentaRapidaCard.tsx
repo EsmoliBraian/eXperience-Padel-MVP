@@ -1,15 +1,37 @@
-import { useRef, useState } from 'react'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { SaleWorkspace } from '@/components/admin/SaleWorkspace'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 interface Tab {
   id: string
   label: string
+  reservationId?: string
 }
 
-export function VentaRapidaCard() {
+export interface VentaRapidaCardHandle {
+  openReservation: (reservationId: string) => void
+}
+
+export const VentaRapidaCard = forwardRef<VentaRapidaCardHandle>((_props, ref) => {
   const [tabs, setTabs] = useState<Tab[]>([{ id: 'tab-1', label: 'Cuenta 1' }])
   const [activeTabId, setActiveTabId] = useState('tab-1')
   const nextIdRef = useRef(2)
+  const tabsRef = useRef(tabs)
+  tabsRef.current = tabs
+  const [confirmCloseTabId, setConfirmCloseTabId] = useState<string | null>(null)
+
+  useImperativeHandle(ref, () => ({
+    openReservation(reservationId: string) {
+      const existing = tabsRef.current.find((t) => t.reservationId === reservationId)
+      if (existing) {
+        setActiveTabId(existing.id)
+        return
+      }
+      const id = `tab-${nextIdRef.current++}`
+      setTabs((prev) => [...prev, { id, label: 'Turno', reservationId }])
+      setActiveTabId(id)
+    },
+  }))
 
   function handleAddTab() {
     const id = `tab-${nextIdRef.current++}`
@@ -19,12 +41,15 @@ export function VentaRapidaCard() {
 
   function handleCloseTab(id: string) {
     if (tabs.length === 1) return
-    if (!window.confirm('¿Cerrar esta cuenta? Se pierde lo que no se haya cobrado todavia.')) {
-      return
-    }
-    const remaining = tabs.filter((t) => t.id !== id)
+    setConfirmCloseTabId(id)
+  }
+
+  function handleConfirmCloseTab() {
+    if (!confirmCloseTabId) return
+    const remaining = tabs.filter((t) => t.id !== confirmCloseTabId)
     setTabs(remaining)
-    if (activeTabId === id) setActiveTabId(remaining[0].id)
+    if (activeTabId === confirmCloseTabId) setActiveTabId(remaining[0].id)
+    setConfirmCloseTabId(null)
   }
 
   function handleLabelChange(id: string, label: string) {
@@ -71,9 +96,24 @@ export function VentaRapidaCard() {
 
       {tabs.map((tab) => (
         <div key={tab.id} className={activeTabId === tab.id ? '' : 'hidden'}>
-          <SaleWorkspace onLabelChange={(label) => handleLabelChange(tab.id, label)} />
+          <SaleWorkspace
+            reservationId={tab.reservationId}
+            onLabelChange={(label) => handleLabelChange(tab.id, label)}
+          />
         </div>
       ))}
+
+      {confirmCloseTabId && (
+        <ConfirmDialog
+          title="Cerrar cuenta"
+          message="¿Cerrar esta cuenta? Se pierde lo que no se haya cobrado todavia."
+          confirmLabel="Cerrar cuenta"
+          onConfirm={handleConfirmCloseTab}
+          onCancel={() => setConfirmCloseTabId(null)}
+        />
+      )}
     </div>
   )
-}
+})
+
+VentaRapidaCard.displayName = 'VentaRapidaCard'

@@ -27,7 +27,7 @@ export function VenueDirectoryPage() {
   }, [])
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col bg-gray-950 p-5">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col p-5">
       <h1 className="mb-4 text-lg font-semibold text-gray-50">Clubes</h1>
 
       {venues === null && <p className="text-sm text-gray-500">Cargando...</p>}

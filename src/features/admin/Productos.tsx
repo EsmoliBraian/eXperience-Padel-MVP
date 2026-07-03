@@ -95,7 +95,7 @@ function ProductCard({ product, categories }: { product: Product; categories: Ca
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
         <label className="block text-sm text-gray-400">
@@ -104,7 +104,7 @@ function ProductCard({ product, categories }: { product: Product; categories: Ca
             type="number"
             value={price}
             onChange={(e) => setPrice(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">
@@ -112,7 +112,7 @@ function ProductCard({ product, categories }: { product: Product; categories: Ca
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             <option value="">Sin categoria</option>
             {categories.map((c) => (
@@ -127,7 +127,7 @@ function ProductCard({ product, categories }: { product: Product; categories: Ca
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
             rows={2}
           />
         </label>

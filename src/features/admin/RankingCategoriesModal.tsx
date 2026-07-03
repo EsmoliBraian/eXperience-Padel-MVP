@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
-import { useCategoriesStore } from '@/store/categoriesStore'
-import { useProductsStore } from '@/store/productsStore'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
+import { useRankingStore } from '@/store/rankingStore'
 import { ErrorText } from '@/components/ErrorText'
-import type { Category } from '@/types'
+import type { RankingCategory } from '@/types'
 
-function CategoryRow({ category }: { category: Category }) {
-  const updateCategory = useCategoriesStore((s) => s.updateCategory)
-  const deleteCategory = useCategoriesStore((s) => s.deleteCategory)
-  const fetchProducts = useProductsStore((s) => s.fetchProducts)
+function CategoryRow({ category }: { category: RankingCategory }) {
+  const updateCategory = useRankingCategoriesStore((s) => s.updateCategory)
+  const deleteCategory = useRankingCategoriesStore((s) => s.deleteCategory)
+  const fetchEntries = useRankingStore((s) => s.fetchEntries)
 
   const [name, setName] = useState(category.name)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const dirty = name !== category.name
 
@@ -26,10 +28,11 @@ function CategoryRow({ category }: { category: Category }) {
   async function handleDelete() {
     const deleteError = await deleteCategory(category.id)
     if (deleteError) {
+      setConfirmingDelete(false)
       setError(deleteError)
       return
     }
-    fetchProducts()
+    fetchEntries()
   }
 
   return (
@@ -50,20 +53,30 @@ function CategoryRow({ category }: { category: Category }) {
         </button>
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmingDelete(true)}
           className="text-xs text-danger hover:underline"
         >
           Eliminar
         </button>
       </div>
       <ErrorText error={error} />
+
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="Eliminar categoria"
+          message={`¿Eliminar la categoria "${category.name}"? Se pierde el ranking cargado en esa categoria.`}
+          confirmLabel="Eliminar"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </div>
   )
 }
 
-export function CategoriesModal({ onClose }: { onClose: () => void }) {
-  const categories = useCategoriesStore((s) => s.categories)
-  const addCategory = useCategoriesStore((s) => s.addCategory)
+export function RankingCategoriesModal({ onClose }: { onClose: () => void }) {
+  const categories = useRankingCategoriesStore((s) => s.categories)
+  const addCategory = useRankingCategoriesStore((s) => s.addCategory)
 
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -83,7 +96,7 @@ export function CategoriesModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Categorias de productos" onClose={onClose}>
+    <Modal title="Categorias de ranking" onClose={onClose}>
       <div className="space-y-3 text-sm">
         <div className="space-y-2">
           {categories.map((c) => (
@@ -98,7 +111,7 @@ export function CategoriesModal({ onClose }: { onClose: () => void }) {
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Nueva categoria"
+            placeholder="Ej: 4ta Masculina"
             className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
           />
           <button

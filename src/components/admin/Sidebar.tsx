@@ -4,15 +4,16 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge' },
-  { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check' },
-  { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock' },
-  { to: '/admin/slides', label: 'Slides / Hero', icon: 'fa-images' },
-  { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy' },
-  { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping' },
-  { to: '/admin/ventas', label: 'Ventas del dia', icon: 'fa-cash-register' },
-  { to: '/admin/metricas', label: 'Metricas', icon: 'fa-chart-line' },
-  { to: '/admin/configuracion', label: 'Configuracion', icon: 'fa-gear' },
+  { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge', color: '#22E6B8' },
+  { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check', color: '#4CA8FF' },
+  { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock', color: '#FFC857' },
+  { to: '/admin/slides', label: 'Slides / Hero', icon: 'fa-images', color: '#B68CFF' },
+  { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy', color: '#B68CFF' },
+  { to: '/admin/ranking', label: 'Ranking', icon: 'fa-ranking-star', color: '#FF7FA8' },
+  { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping', color: '#66D18F' },
+  { to: '/admin/ventas', label: 'Ventas del dia', icon: 'fa-cash-register', color: '#F08A5D' },
+  { to: '/admin/metricas', label: 'Metricas', icon: 'fa-chart-line', color: '#7DD3FC' },
+  { to: '/admin/configuracion', label: 'Configuracion', icon: 'fa-gear', color: '#A1A1AA' },
 ]
 
 export function Sidebar() {
@@ -32,7 +33,7 @@ export function Sidebar() {
         <span className="font-semibold text-gray-50">{venueName}</span>
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1.5">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -40,15 +41,22 @@ export function Sidebar() {
             end={item.end}
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+              `flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
                 isActive
                   ? 'bg-primary-500/10 text-primary-500'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
+                  : 'text-gray-400 hover:bg-gray-900 hover:text-gray-100'
               }`
             }
           >
-            <i className={`fa-solid ${item.icon} w-4 text-center`} />
-            {item.label}
+            {({ isActive }) => (
+              <>
+                <i
+                  className={`fa-solid ${item.icon} w-4 text-center transition-colors duration-150`}
+                  style={{ color: isActive ? '#22E6B8' : item.color, opacity: isActive ? 1 : 0.85 }}
+                />
+                {item.label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -56,8 +64,9 @@ export function Sidebar() {
       <button
         type="button"
         onClick={logout}
-        className="rounded-lg px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+        className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-400 transition-colors duration-150 hover:bg-gray-900 hover:text-gray-100"
       >
+        <i className="fa-solid fa-arrow-right-from-bracket w-4 text-center" />
         Cerrar sesion
       </button>
     </>

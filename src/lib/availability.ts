@@ -45,3 +45,26 @@ export function getAvailableSlots(
   return getTimeSlotsWithStatus(settings, courts, reservations, date, closedDates)
     .filter((slot): slot is { time: string; court: Court } => slot.court !== null)
 }
+
+export interface CourtTimeSlot {
+  time: string
+  available: boolean
+}
+
+export function getCourtTimeSlots(
+  settings: ScheduleSettings,
+  court: Court,
+  reservations: Reservation[],
+  date: string,
+  closedDates: ClosedDate[] = [],
+): CourtTimeSlot[] {
+  if (closedDates.some((c) => c.date === date)) return []
+
+  const takenTimes = new Set(
+    reservations
+      .filter((r) => r.date === date && r.status !== 'cancelado' && r.courtId === court.id)
+      .map((r) => r.time),
+  )
+
+  return generateTimeLabels(settings).map((time) => ({ time, available: !takenTimes.has(time) }))
+}

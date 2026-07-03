@@ -89,7 +89,7 @@ export function TurnoCheckoutGroup({ reservation }: TurnoCheckoutGroupProps) {
         <select
           value={selectedIndex}
           onChange={(e) => setSelectedIndex(Number(e.target.value))}
-          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-1.5 text-sm text-gray-100"
+          className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
         >
           {Array.from({ length: personaCount }, (_, i) => (
             <option key={i} value={i}>

@@ -56,7 +56,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 
@@ -65,7 +65,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
           <select
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             {times.map((value) => (
               <option key={value} value={value}>
@@ -80,7 +80,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
           <select
             value={courtId}
             onChange={(e) => setCourtId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             {courts.map((c) => (
               <option key={c.id} value={c.id}>
@@ -95,7 +95,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
           <input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           />
         </label>
 
@@ -104,7 +104,7 @@ export function NuevaReservaModal({ onClose }: { onClose: () => void }) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as ReservationStatus)}
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-100"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
           >
             <option value="reservado">Reservado</option>
             <option value="confirmado">Confirmado</option>

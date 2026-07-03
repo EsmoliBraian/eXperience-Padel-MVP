@@ -4,7 +4,6 @@ export interface ReservationSummary {
   date: string // YYYY-MM-DD
   time: string
   courtName: string
-  players: number
 }
 
 export function buildReservationMessage(r: ReservationSummary): string {
@@ -14,7 +13,6 @@ export function buildReservationMessage(r: ReservationSummary): string {
     `Fecha: ${longDate}`,
     `Horario: ${r.time} hs`,
     `Cancha: ${r.courtName}`,
-    `Jugadores: ${r.players}`,
     'Gracias!',
   ].join('\n')
 }
