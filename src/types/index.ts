@@ -25,6 +25,14 @@ export interface ClosedDate {
   reason?: string
 }
 
+export interface FixedSlot {
+  id: string
+  courtId: string
+  weekday: number // 0 = domingo ... 6 = sabado, igual que Date.getDay()
+  time: string // HH:00
+  customerName: string
+}
+
 export type ReservationStatus = 'reservado' | 'confirmado' | 'cancelado'
 
 export interface Reservation {

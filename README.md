@@ -1,4 +1,4 @@
-# eXperience Padel MVP
+# Ventana Padel
 
 App de reservas de canchas de padel. Los jugadores reservan un turno sin registrarse y confirman por WhatsApp; el club gestiona reservas, horarios, torneos, productos, ventas y metricas desde un panel de administracion.
 

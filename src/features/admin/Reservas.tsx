@@ -2,10 +2,176 @@ import { useMemo, useState } from 'react'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useFixedSlotsStore } from '@/store/fixedSlotsStore'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ErrorText } from '@/components/ErrorText'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { generateTimeLabels } from '@/lib/timeSlots'
 import { formatCurrency, todayKey } from '@/lib/format'
 import type { Court, ReservationStatus } from '@/types'
+
+const WEEKDAY_LABELS = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miercoles',
+  'Jueves',
+  'Viernes',
+  'Sabado',
+]
+
+function TurnosFijosPanel() {
+  const courts = useCourtsStore((s) => s.courts)
+  const settings = useSettingsStore()
+  const fixedSlots = useFixedSlotsStore((s) => s.fixedSlots)
+  const addFixedSlot = useFixedSlotsStore((s) => s.addFixedSlot)
+  const deleteFixedSlot = useFixedSlotsStore((s) => s.deleteFixedSlot)
+
+  const times = generateTimeLabels(settings)
+
+  const [weekday, setWeekday] = useState(1)
+  const [time, setTime] = useState(times[0] ?? '')
+  const [courtId, setCourtId] = useState(courts[0]?.id ?? '')
+  const [customerName, setCustomerName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+
+  const canAdd = courtId !== '' && time !== ''
+
+  const sortedFixedSlots = useMemo(
+    () => [...fixedSlots].sort((a, b) => a.weekday - b.weekday || a.time.localeCompare(b.time)),
+    [fixedSlots],
+  )
+
+  function courtName(id: string) {
+    return courts.find((c) => c.id === id)?.name ?? id
+  }
+
+  async function handleAdd() {
+    if (!canAdd) return
+    setAdding(true)
+    const addError = await addFixedSlot({
+      courtId,
+      weekday,
+      time: time || (times[0] ?? ''),
+      customerName: customerName.trim(),
+    })
+    setAdding(false)
+    if (addError) {
+      setError(addError)
+      return
+    }
+    setError(null)
+    setCustomerName('')
+  }
+
+  async function handleDelete(id: string) {
+    setConfirmingDeleteId(null)
+    const deleteError = await deleteFixedSlot(id)
+    if (deleteError) setError(deleteError)
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <p className="text-sm font-medium text-gray-300">Turnos fijos</p>
+      <p className="text-xs text-gray-500">
+        Un turno fijo queda reservado todas las semanas ese dia y horario hasta que lo canceles.
+      </p>
+
+      <div className="space-y-2">
+        {sortedFixedSlots.map((slot) => (
+          <div
+            key={slot.id}
+            className="flex items-center justify-between gap-2 rounded-lg border border-gray-800 bg-gray-925 px-3 py-2 text-sm"
+          >
+            <div className="min-w-0">
+              <p className="text-gray-100">
+                {WEEKDAY_LABELS[slot.weekday]} {slot.time} — {courtName(slot.courtId)}
+              </p>
+              {slot.customerName && (
+                <p className="truncate text-xs text-gray-500">{slot.customerName}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setConfirmingDeleteId(slot.id)}
+              aria-label="Cancelar turno fijo"
+              className="shrink-0 text-gray-400 hover:text-danger"
+            >
+              <i className="fa-solid fa-trash" />
+            </button>
+          </div>
+        ))}
+        {fixedSlots.length === 0 && (
+          <p className="text-sm text-gray-500">No hay turnos fijos cargados.</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 border-t border-gray-800 pt-3 sm:grid-cols-4">
+        <select
+          value={weekday}
+          onChange={(e) => setWeekday(Number(e.target.value))}
+          className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
+        >
+          {WEEKDAY_LABELS.map((label, i) => (
+            <option key={label} value={i}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
+        >
+          {times.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <select
+          value={courtId}
+          onChange={(e) => setCourtId(e.target.value)}
+          className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
+        >
+          {courts.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <input
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          placeholder="Cliente (opcional)"
+          className="rounded-lg border border-gray-700 bg-gray-925 px-2 py-1.5 text-sm text-gray-100"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={!canAdd || adding}
+        className="rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+      >
+        + Agregar turno fijo
+      </button>
+
+      <ErrorText error={error} />
+
+      {confirmingDeleteId && (
+        <ConfirmDialog
+          title="Cancelar turno fijo"
+          message="¿Cancelar este turno fijo? El horario queda libre desde la proxima semana."
+          confirmLabel="Cancelar turno"
+          onConfirm={() => handleDelete(confirmingDeleteId)}
+          onCancel={() => setConfirmingDeleteId(null)}
+        />
+      )}
+    </div>
+  )
+}
 
 function DuracionTurnoPanel() {
   const slotDurationMinutes = useSettingsStore((s) => s.slotDurationMinutes)
@@ -212,6 +378,8 @@ export function Reservas() {
         <DuracionTurnoPanel />
         <CanchasPanel />
       </div>
+
+      <TurnosFijosPanel />
 
       <div className="flex flex-wrap gap-3">
         <input

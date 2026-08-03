@@ -4,6 +4,7 @@ import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useSalesStore } from '@/store/salesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
+import { useFixedSlotsStore } from '@/store/fixedSlotsStore'
 import { getAvailableSlots } from '@/lib/availability'
 import { generateTimeLabels } from '@/lib/timeSlots'
 import { reservationIdsWithAbsorbedFee } from '@/lib/salesRevenue'
@@ -20,6 +21,7 @@ export function Dashboard() {
   const reservations = useReservationsStore((s) => s.reservations)
   const sales = useSalesStore((s) => s.sales)
   const closedDates = useClosedDatesStore((s) => s.closedDates)
+  const fixedSlots = useFixedSlotsStore((s) => s.fixedSlots)
 
   const [showModal, setShowModal] = useState(false)
   const [gridDate, setGridDate] = useState(todayKey())
@@ -60,9 +62,15 @@ export function Dashboard() {
     reservations,
     today,
     closedDates,
+    fixedSlots,
   ).length
 
   const times = generateTimeLabels(settings)
+  const gridWeekday = fromDateKey(gridDate).getDay()
+  const gridFixedSlots = useMemo(
+    () => fixedSlots.filter((f) => f.weekday === gridWeekday),
+    [fixedSlots, gridWeekday],
+  )
 
   return (
     <div className="space-y-6">
@@ -163,6 +171,9 @@ export function Dashboard() {
                       const reservation = gridReservations.find(
                         (r) => r.courtId === court.id && r.time === time,
                       )
+                      const fixedSlot = gridFixedSlots.find(
+                        (f) => f.courtId === court.id && f.time === time,
+                      )
                       return (
                         <td key={court.id} className="py-3 pr-3">
                           {reservation ? (
@@ -177,6 +188,15 @@ export function Dashboard() {
                                 <p className="text-gray-400">{reservation.customerName}</p>
                               )}
                             </button>
+                          ) : fixedSlot ? (
+                            <div className="space-y-0.5" title="Turno fijo semanal">
+                              <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-brand-300">
+                                Turno fijo
+                              </span>
+                              {fixedSlot.customerName && (
+                                <p className="text-gray-400">{fixedSlot.customerName}</p>
+                              )}
+                            </div>
                           ) : (
                             <span className="rounded-full bg-[#24262A] px-2 py-0.5 text-[#A7ADB6]">
                               Disponible

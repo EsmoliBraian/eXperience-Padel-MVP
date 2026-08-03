@@ -36,6 +36,16 @@ create table if not exists closed_dates (
   unique (venue_id, date)
 );
 
+create table if not exists fixed_slots (
+  id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references settings(id) on delete cascade,
+  court_id uuid not null references courts(id) on delete cascade,
+  weekday int not null check (weekday between 0 and 6),
+  time text not null,
+  customer_name text not null default '',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists reservations (
   id uuid primary key default gen_random_uuid(),
   venue_id uuid not null references settings(id) on delete cascade,
@@ -156,6 +166,7 @@ alter table sale_payments enable row level security;
 alter table tournaments enable row level security;
 alter table hero_slides enable row level security;
 alter table closed_dates enable row level security;
+alter table fixed_slots enable row level security;
 alter table categories enable row level security;
 alter table ranking_categories enable row level security;
 alter table ranking_points enable row level security;
@@ -224,6 +235,10 @@ create policy "owner write hero_slides" on hero_slides for all
 
 create policy "public read closed_dates" on closed_dates for select using (true);
 create policy "owner write closed_dates" on closed_dates for all
+  using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
+
+create policy "public read fixed_slots" on fixed_slots for select using (true);
+create policy "owner write fixed_slots" on fixed_slots for all
   using (venue_id = get_my_venue_id()) with check (venue_id = get_my_venue_id());
 
 create policy "public read categories" on categories for select using (true);

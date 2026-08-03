@@ -6,6 +6,7 @@ import { useReservationsStore } from '@/store/reservationsStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
+import { useFixedSlotsStore } from '@/store/fixedSlotsStore'
 import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
 import { useRankingStore } from '@/store/rankingStore'
 import { SiteHeader } from '@/components/site/SiteHeader'
@@ -35,6 +36,7 @@ export function PublicLayout() {
           useTournamentsStore.getState().fetchTournaments(),
           useSlidesStore.getState().fetchSlides(),
           useClosedDatesStore.getState().fetchClosedDates(),
+          useFixedSlotsStore.getState().fetchFixedSlots(),
           useRankingCategoriesStore.getState().fetchCategories(),
           useRankingStore.getState().fetchEntries(),
         ]).then(() => {

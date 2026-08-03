@@ -9,6 +9,7 @@ import { useSalesStore } from '@/store/salesStore'
 import { useTournamentsStore } from '@/store/tournamentsStore'
 import { useSlidesStore } from '@/store/slidesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
+import { useFixedSlotsStore } from '@/store/fixedSlotsStore'
 import { useCategoriesStore } from '@/store/categoriesStore'
 import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
 import { useRankingStore } from '@/store/rankingStore'
@@ -50,6 +51,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       useTournamentsStore.getState().fetchTournaments(),
       useSlidesStore.getState().fetchSlides(),
       useClosedDatesStore.getState().fetchClosedDates(),
+      useFixedSlotsStore.getState().fetchFixedSlots(),
       useCategoriesStore.getState().fetchCategories(),
       useRankingCategoriesStore.getState().fetchCategories(),
       useRankingStore.getState().fetchPoints(),

@@ -3,6 +3,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
+import { useFixedSlotsStore } from '@/store/fixedSlotsStore'
 import { getCourtTimeSlots } from '@/lib/availability'
 import { formatCurrency, formatLongDate, fromDateKey, nextDays, toDateKey, weekdayShort } from '@/lib/format'
 import { buildReservationMessage, buildWhatsAppLink } from '@/lib/whatsapp'
@@ -21,6 +22,7 @@ export function BookingFlowPage() {
   const reservations = useReservationsStore((s) => s.reservations)
   const addReservation = useReservationsStore((s) => s.addReservation)
   const closedDates = useClosedDatesStore((s) => s.closedDates)
+  const fixedSlots = useFixedSlotsStore((s) => s.fixedSlots)
 
   const days = useMemo(() => nextDays(5), [])
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(days[0]))
@@ -34,9 +36,16 @@ export function BookingFlowPage() {
   const timeSlots = useMemo(
     () =>
       selectedCourt
-        ? getCourtTimeSlots(settings, selectedCourt, reservations, selectedDate, closedDates)
+        ? getCourtTimeSlots(
+            settings,
+            selectedCourt,
+            reservations,
+            selectedDate,
+            closedDates,
+            fixedSlots,
+          )
         : [],
-    [settings, selectedCourt, reservations, selectedDate, closedDates],
+    [settings, selectedCourt, reservations, selectedDate, closedDates, fixedSlots],
   )
 
   const total = selectedSlot ? selectedSlot.court.price : 0

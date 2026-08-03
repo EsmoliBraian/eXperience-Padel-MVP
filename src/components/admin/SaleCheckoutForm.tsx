@@ -111,6 +111,12 @@ export function SaleCheckoutForm({
     }
 
     setError(null)
+    setQuantities({})
+    setMode('efectivo')
+    setSplitPayments([])
+    setDebtorName('')
+    setSearchQuery('')
+    setShowAllProducts(false)
     onConfirmed?.(grandTotal)
   }
 
@@ -211,7 +217,7 @@ export function SaleCheckoutForm({
             key={m}
             type="button"
             onClick={() => handleSelectMode(m)}
-            className={`rounded-lg border py-1.5 text-xs font-medium ${
+            className={`rounded-lg border px-1 py-2 text-center text-[11px] font-medium leading-tight ${
               mode === m ? '' : 'border-gray-800 text-gray-400'
             }`}
             style={
