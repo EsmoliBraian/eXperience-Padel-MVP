@@ -3,6 +3,7 @@ import { useTournamentsStore } from '@/store/tournamentsStore'
 import { todayKey } from '@/lib/format'
 import { uploadImage } from '@/lib/storage'
 import { ErrorText } from '@/components/ErrorText'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { Tournament } from '@/types'
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
@@ -17,6 +18,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const dirty =
     name !== tournament.name ||
@@ -69,6 +71,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   }
 
   async function handleDelete() {
+    setConfirmingDelete(false)
     setError(await deleteTournament(tournament.id))
   }
 
@@ -100,23 +103,46 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
               <p className="text-xs text-gray-500">{tournament.date}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3 text-xs">
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               onClick={handlePublishToggle}
-              className="text-primary-500 hover:underline"
+              aria-label={tournament.published ? 'Despublicar' : 'Publicar'}
+              title={tournament.published ? 'Despublicar' : 'Publicar'}
+              className="text-gray-400 hover:text-primary-500"
             >
-              {tournament.published ? 'Despublicar' : 'Publicar'}
+              <i className={`fa-solid ${tournament.published ? 'fa-eye-slash' : 'fa-eye'}`} />
             </button>
-            <button type="button" onClick={handleEdit} className="text-primary-500 hover:underline">
-              Editar
+            <button
+              type="button"
+              onClick={handleEdit}
+              aria-label="Editar torneo"
+              title="Editar"
+              className="text-gray-400 hover:text-primary-500"
+            >
+              <i className="fa-solid fa-pen" />
             </button>
-            <button type="button" onClick={handleDelete} className="text-danger hover:underline">
-              Eliminar
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              aria-label="Eliminar torneo"
+              title="Eliminar"
+              className="text-gray-400 hover:text-danger"
+            >
+              <i className="fa-solid fa-trash" />
             </button>
           </div>
         </div>
         <ErrorText error={error} />
+        {confirmingDelete && (
+          <ConfirmDialog
+            title="Eliminar torneo"
+            message={`¿Eliminar "${tournament.name}"? Esta accion no se puede deshacer.`}
+            confirmLabel="Eliminar"
+            onConfirm={handleDelete}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        )}
       </div>
     )
   }
@@ -198,10 +224,11 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={handleDelete}
-          className="text-xs text-danger hover:underline"
+          onClick={() => setConfirmingDelete(true)}
+          aria-label="Eliminar torneo"
+          className="text-gray-400 hover:text-danger"
         >
-          Eliminar torneo
+          <i className="fa-solid fa-trash" />
         </button>
         <div className="flex items-center gap-2">
           <button
@@ -221,6 +248,15 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </button>
         </div>
       </div>
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="Eliminar torneo"
+          message={`¿Eliminar "${tournament.name}"? Esta accion no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </div>
   )
 }

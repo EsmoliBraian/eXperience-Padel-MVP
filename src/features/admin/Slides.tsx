@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSlidesStore } from '@/store/slidesStore'
 import { uploadImage } from '@/lib/storage'
 import { ErrorText } from '@/components/ErrorText'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { HeroSlide } from '@/types'
 
 function SlideCard({ slide }: { slide: HeroSlide }) {
@@ -16,6 +17,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const dirty =
     title !== slide.title ||
@@ -68,6 +70,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   }
 
   async function handleDelete() {
+    setConfirmingDelete(false)
     setError(await deleteSlide(slide.id))
   }
 
@@ -97,23 +100,46 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
               <p className="truncate text-xs text-gray-500">{slide.subtitle}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3 text-xs">
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               onClick={handlePublishToggle}
-              className="text-primary-500 hover:underline"
+              aria-label={slide.published ? 'Despublicar' : 'Publicar'}
+              title={slide.published ? 'Despublicar' : 'Publicar'}
+              className="text-gray-400 hover:text-primary-500"
             >
-              {slide.published ? 'Despublicar' : 'Publicar'}
+              <i className={`fa-solid ${slide.published ? 'fa-eye-slash' : 'fa-eye'}`} />
             </button>
-            <button type="button" onClick={handleEdit} className="text-primary-500 hover:underline">
-              Editar
+            <button
+              type="button"
+              onClick={handleEdit}
+              aria-label="Editar post"
+              title="Editar"
+              className="text-gray-400 hover:text-primary-500"
+            >
+              <i className="fa-solid fa-pen" />
             </button>
-            <button type="button" onClick={handleDelete} className="text-danger hover:underline">
-              Eliminar
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              aria-label="Eliminar post"
+              title="Eliminar"
+              className="text-gray-400 hover:text-danger"
+            >
+              <i className="fa-solid fa-trash" />
             </button>
           </div>
         </div>
         <ErrorText error={error} />
+        {confirmingDelete && (
+          <ConfirmDialog
+            title="Eliminar post"
+            message={`¿Eliminar "${slide.title}"? Esta accion no se puede deshacer.`}
+            confirmLabel="Eliminar"
+            onConfirm={handleDelete}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        )}
       </div>
     )
   }
@@ -194,10 +220,11 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={handleDelete}
-          className="text-xs text-danger hover:underline"
+          onClick={() => setConfirmingDelete(true)}
+          aria-label="Eliminar post"
+          className="text-gray-400 hover:text-danger"
         >
-          Eliminar slide
+          <i className="fa-solid fa-trash" />
         </button>
         <div className="flex items-center gap-2">
           <button
@@ -217,6 +244,15 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
           </button>
         </div>
       </div>
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="Eliminar post"
+          message={`¿Eliminar "${slide.title}"? Esta accion no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </div>
   )
 }

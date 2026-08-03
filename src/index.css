@@ -22,6 +22,17 @@
     cursor: pointer;
   }
 
+  /* iOS Safari keeps its own default rounded-rect chrome on date inputs
+     no matter what background/border we set, so it renders as a ghost
+     box overlapping our custom style. Only below the sm breakpoint (real
+     phones) so desktop's date-picker icon is untouched. */
+  @media (max-width: 639px) {
+    input[type='date'] {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+  }
+
   /* Native <option> lists ignore page CSS in some browsers unless styled
      explicitly, even with color-scheme set — without this they can render
      with a white background and inherited light text (invisible). */
