@@ -47,6 +47,7 @@ export function SaleCheckoutForm({
   const [debtorName, setDebtorName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
 
   const visibleProducts = useMemo(() => {
     if (showAllProducts) return products
@@ -63,6 +64,7 @@ export function SaleCheckoutForm({
     setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
     setSearchQuery('')
     setShowAllProducts(false)
+    setConfirmed(false)
   }
 
   function handleQtyChange(productId: string, delta: number) {
@@ -70,6 +72,16 @@ export function SaleCheckoutForm({
       ...prev,
       [productId]: Math.max(0, (prev[productId] ?? 0) + delta),
     }))
+    setConfirmed(false)
+  }
+
+  function handleConfirmClick() {
+    if (cartProducts.length === 0 && extraFee <= 0) {
+      setError('Agregá al menos un producto.')
+      return
+    }
+    setError(null)
+    setConfirmed(true)
   }
 
   function handleSelectMode(next: SaleMode) {
@@ -117,6 +129,7 @@ export function SaleCheckoutForm({
     setDebtorName('')
     setSearchQuery('')
     setShowAllProducts(false)
+    setConfirmed(false)
     onConfirmed?.(grandTotal)
   }
 
@@ -211,58 +224,77 @@ export function SaleCheckoutForm({
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-4 gap-2">
-        {(['efectivo', 'transferencia', 'mixto', 'adeuda'] as SaleMode[]).map((m) => (
+      {confirmed ? (
+        <>
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {(['efectivo', 'transferencia', 'mixto', 'adeuda'] as SaleMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => handleSelectMode(m)}
+                className={`rounded-lg border px-1 py-2 text-center text-[11px] font-medium leading-tight ${
+                  mode === m ? '' : 'border-gray-800 text-gray-400'
+                }`}
+                style={
+                  mode === m
+                    ? {
+                        borderColor: PAYMENT_COLORS[m],
+                        backgroundColor: `${PAYMENT_COLORS[m]}1A`,
+                        color: PAYMENT_COLORS[m],
+                      }
+                    : undefined
+                }
+              >
+                {MODE_LABELS[m]}
+              </button>
+            ))}
+          </div>
+
+          {mode === 'mixto' && (
+            <div className="mt-3">
+              <PaymentBreakdown
+                payments={splitPayments}
+                onChange={setSplitPayments}
+                total={grandTotal}
+              />
+            </div>
+          )}
+
+          {mode === 'adeuda' && (
+            <label className="mt-3 block text-xs text-gray-400">
+              Nombre del deudor
+              <input
+                value={debtorName}
+                onChange={(e) => setDebtorName(e.target.value)}
+                placeholder="Quien se lo lleva fiado"
+                className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
+              />
+            </label>
+          )}
+
+          <ErrorText error={error} />
+
           <button
-            key={m}
             type="button"
-            onClick={() => handleSelectMode(m)}
-            className={`rounded-lg border px-1 py-2 text-center text-[11px] font-medium leading-tight ${
-              mode === m ? '' : 'border-gray-800 text-gray-400'
-            }`}
-            style={
-              mode === m
-                ? {
-                    borderColor: PAYMENT_COLORS[m],
-                    backgroundColor: `${PAYMENT_COLORS[m]}1A`,
-                    color: PAYMENT_COLORS[m],
-                  }
-                : undefined
-            }
+            onClick={handleConfirmSale}
+            disabled={confirming}
+            className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
           >
-            {MODE_LABELS[m]}
+            {confirming ? 'Cobrando...' : 'Cobrar'}
           </button>
-        ))}
-      </div>
-
-      {mode === 'mixto' && (
-        <div className="mt-3">
-          <PaymentBreakdown payments={splitPayments} onChange={setSplitPayments} total={grandTotal} />
-        </div>
+        </>
+      ) : (
+        <>
+          <ErrorText error={error} />
+          <button
+            type="button"
+            onClick={handleConfirmClick}
+            className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
+          >
+            {confirmLabel}
+          </button>
+        </>
       )}
-
-      {mode === 'adeuda' && (
-        <label className="mt-3 block text-xs text-gray-400">
-          Nombre del deudor
-          <input
-            value={debtorName}
-            onChange={(e) => setDebtorName(e.target.value)}
-            placeholder="Quien se lo lleva fiado"
-            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-sm text-gray-100"
-          />
-        </label>
-      )}
-
-      <ErrorText error={error} />
-
-      <button
-        type="button"
-        onClick={handleConfirmSale}
-        disabled={confirming}
-        className="mt-3 w-full rounded-lg bg-primary-500 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
-      >
-        {confirming ? 'Confirmando...' : confirmLabel}
-      </button>
     </div>
   )
 }

@@ -73,7 +73,6 @@ export function PersonaTab({
           extraFee={appliedCourtFee}
           extraFeeLabel="Cancha"
           defaultDebtorName={name}
-          confirmLabel="Cobrar"
           onConfirmed={handleConfirmed}
         />
       ) : (
