@@ -6,7 +6,7 @@ interface KpiCardProps {
   accentColor?: string
 }
 
-export function KpiCard({ label, value, delta, icon, accentColor = '#22E6B8' }: KpiCardProps) {
+export function KpiCard({ label, value, delta, icon, accentColor = '#B8FF3B' }: KpiCardProps) {
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-5 shadow-card">
       <div className="flex items-center justify-between">

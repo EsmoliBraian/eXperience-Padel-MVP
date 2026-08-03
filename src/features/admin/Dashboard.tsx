@@ -82,13 +82,13 @@ export function Dashboard() {
           label="Reservas hoy"
           value={String(todayReservations.length)}
           icon="fa-calendar-check"
-          accentColor="#22E6B8"
+          accentColor="#B8FF3B"
         />
         <KpiCard
           label="Ingresos hoy"
           value={formatCurrency(ingresosHoy)}
           icon="fa-sack-dollar"
-          accentColor="#22E6B8"
+          accentColor="#B8FF3B"
         />
         <KpiCard
           label="Productos vendidos"

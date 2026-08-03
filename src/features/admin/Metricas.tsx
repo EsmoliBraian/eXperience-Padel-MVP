@@ -27,7 +27,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   transferencia: 'Transferencia',
   mixto: 'Mixto',
 }
-const OCCUPANCY_COLORS = ['#22E6B8', '#2A2C31']
+const OCCUPANCY_COLORS = ['#B8FF3B', '#2A2C31']
 
 export function Metricas() {
   const settings = useSettingsStore()
@@ -113,8 +113,8 @@ export function Metricas() {
               <Area
                 type="monotone"
                 dataKey="total"
-                stroke="#22E6B8"
-                fill="#22E6B8"
+                stroke="#B8FF3B"
+                fill="#B8FF3B"
                 fillOpacity={0.2}
               />
             </AreaChart>

@@ -4,16 +4,16 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge', color: '#22E6B8' },
-  { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check', color: '#4CA8FF' },
-  { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock', color: '#FFC857' },
-  { to: '/admin/slides', label: 'Blog / Novedades', icon: 'fa-images', color: '#B68CFF' },
-  { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy', color: '#B68CFF' },
-  { to: '/admin/ranking', label: 'Ranking', icon: 'fa-ranking-star', color: '#FF7FA8' },
-  { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping', color: '#66D18F' },
-  { to: '/admin/ventas', label: 'Ventas del dia', icon: 'fa-cash-register', color: '#F08A5D' },
-  { to: '/admin/metricas', label: 'Metricas', icon: 'fa-chart-line', color: '#7DD3FC' },
-  { to: '/admin/configuracion', label: 'Configuracion', icon: 'fa-gear', color: '#A1A1AA' },
+  { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge' },
+  { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check' },
+  { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock' },
+  { to: '/admin/slides', label: 'Blog / Novedades', icon: 'fa-images' },
+  { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy' },
+  { to: '/admin/ranking', label: 'Ranking', icon: 'fa-ranking-star' },
+  { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping' },
+  { to: '/admin/ventas', label: 'Ventas del dia', icon: 'fa-cash-register' },
+  { to: '/admin/metricas', label: 'Metricas', icon: 'fa-chart-line' },
+  { to: '/admin/configuracion', label: 'Configuracion', icon: 'fa-gear' },
 ]
 
 export function Sidebar() {
@@ -51,8 +51,9 @@ export function Sidebar() {
             {({ isActive }) => (
               <>
                 <i
-                  className={`fa-solid ${item.icon} w-4 text-center transition-colors duration-150`}
-                  style={{ color: isActive ? '#22E6B8' : item.color, opacity: isActive ? 1 : 0.85 }}
+                  className={`fa-solid ${item.icon} w-4 text-center transition-colors duration-150 ${
+                    isActive ? 'text-primary-500' : 'text-gray-500'
+                  }`}
                 />
                 {item.label}
               </>

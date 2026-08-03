@@ -1,11 +1,11 @@
 export function PadelHeroBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-gray-950">
-      <div className="absolute -right-24 -top-32 h-[420px] w-[420px] rounded-full bg-primary-500/20 blur-[110px]" />
-      <div className="absolute -bottom-40 -left-24 h-[380px] w-[380px] rounded-full bg-primary-700/25 blur-[110px]" />
+      <div className="absolute -right-24 -top-32 h-[420px] w-[420px] rounded-full bg-brand-500/30 blur-[110px]" />
+      <div className="absolute -bottom-40 -left-24 h-[380px] w-[380px] rounded-full bg-brand-800/35 blur-[110px]" />
 
       <svg
-        className="absolute -right-24 top-1/2 h-[130%] w-auto -translate-y-1/2 text-primary-500/[0.12] sm:right-0"
+        className="absolute -right-24 top-1/2 h-[130%] w-auto -translate-y-1/2 text-brand-300/[0.16] sm:right-0"
         viewBox="0 0 400 600"
         fill="none"
       >
@@ -16,7 +16,7 @@ export function PadelHeroBackground() {
           <line x1="40" y1="420" x2="360" y2="420" stroke="currentColor" strokeWidth="1.5" />
           <line x1="200" y1="20" x2="200" y2="180" stroke="currentColor" strokeWidth="1.5" />
           <line x1="200" y1="420" x2="200" y2="580" stroke="currentColor" strokeWidth="1.5" />
-          <circle cx="200" cy="300" r="3" fill="currentColor" />
+          <circle cx="200" cy="300" r="4" className="fill-primary-500" />
         </g>
       </svg>
 
