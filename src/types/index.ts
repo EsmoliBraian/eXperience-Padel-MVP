@@ -14,6 +14,9 @@ export interface Settings {
   slotDurationMinutes: number
   openHour: number
   closeHour: number
+  about: string
+  address: string
+  instagramUrl?: string
 }
 
 export interface ClosedDate {

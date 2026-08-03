@@ -15,7 +15,10 @@ create table if not exists settings (
   logo_url text,
   slot_duration_minutes int not null default 60,
   open_hour int not null default 8,
-  close_hour int not null default 23
+  close_hour int not null default 23,
+  about text not null default '',
+  address text not null default '',
+  instagram_url text
 );
 
 create table if not exists courts (

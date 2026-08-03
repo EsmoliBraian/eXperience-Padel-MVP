@@ -10,6 +10,9 @@ export function Configuracion() {
   const [venueName, setVenueName] = useState(settings.venueName)
   const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone)
   const [logoUrl, setLogoUrl] = useState(settings.logoUrl ?? '')
+  const [about, setAbout] = useState(settings.about)
+  const [address, setAddress] = useState(settings.address)
+  const [instagramUrl, setInstagramUrl] = useState(settings.instagramUrl ?? '')
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -19,9 +22,12 @@ export function Configuracion() {
   const dirty =
     venueName !== settings.venueName ||
     whatsappPhone !== settings.whatsappPhone ||
-    logoUrl !== (settings.logoUrl ?? '')
+    logoUrl !== (settings.logoUrl ?? '') ||
+    about !== settings.about ||
+    address !== settings.address ||
+    instagramUrl !== (settings.instagramUrl ?? '')
 
-  const bookingLink = settings.slug ? `${window.location.origin}/${settings.slug}` : ''
+  const bookingLink = window.location.origin
 
   async function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -46,7 +52,14 @@ export function Configuracion() {
 
   async function handleSave() {
     setSaving(true)
-    const saveError = await updateSettings({ venueName, whatsappPhone, logoUrl: logoUrl || undefined })
+    const saveError = await updateSettings({
+      venueName,
+      whatsappPhone,
+      logoUrl: logoUrl || undefined,
+      about,
+      address,
+      instagramUrl: instagramUrl || undefined,
+    })
     setSaving(false)
     if (saveError) {
       setError(saveError)
@@ -119,6 +132,41 @@ export function Configuracion() {
         <p className="text-xs text-gray-500">
           Las canchas y su precio se administran en la seccion Reservas.
         </p>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <p className="text-sm font-medium text-gray-200">Landing publica</p>
+
+        <label className="block text-sm text-gray-400">
+          Sobre el club
+          <textarea
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            rows={3}
+            placeholder="Contale a tus jugadores que hace especial al club..."
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
+          />
+        </label>
+
+        <label className="block text-sm text-gray-400">
+          Direccion
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Av. Siempre Viva 742, Buenos Aires"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
+          />
+        </label>
+
+        <label className="block text-sm text-gray-400">
+          Instagram (link completo)
+          <input
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            placeholder="https://instagram.com/tuclub"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
+          />
+        </label>
       </div>
 
       <ErrorText error={error} />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet, useParams } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
@@ -8,24 +8,21 @@ import { useSlidesStore } from '@/store/slidesStore'
 import { useClosedDatesStore } from '@/store/closedDatesStore'
 import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
 import { useRankingStore } from '@/store/rankingStore'
+import { SiteHeader } from '@/components/site/SiteHeader'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
-export function PublicVenueLayout() {
-  const { venueSlug } = useParams()
+export function PublicLayout() {
   const [status, setStatus] = useState<'loading' | 'found' | 'not-found'>('loading')
   const unsubscribeRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    if (!venueSlug) {
-      setStatus('not-found')
-      return
-    }
     let cancelled = false
     setStatus('loading')
     useSettingsStore.getState().reset()
 
     useSettingsStore
       .getState()
-      .fetchSettingsBySlug(venueSlug)
+      .fetchDefaultSettings()
       .then((found) => {
         if (cancelled) return
         if (!found) {
@@ -52,7 +49,7 @@ export function PublicVenueLayout() {
       unsubscribeRef.current()
       unsubscribeRef.current = () => {}
     }
-  }, [venueSlug])
+  }, [])
 
   if (status === 'loading') {
     return (
@@ -64,11 +61,19 @@ export function PublicVenueLayout() {
   if (status === 'not-found') {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-2 text-gray-400">
-        <p className="text-lg text-gray-200">Club no encontrado</p>
-        <p className="text-sm">Revisa el link e intenta de nuevo.</p>
+        <p className="text-lg text-gray-200">El club todavia no esta configurado</p>
+        <p className="text-sm">Volve a intentarlo en unos minutos.</p>
       </div>
     )
   }
 
-  return <Outlet />
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <div className="flex-1">
+        <Outlet />
+      </div>
+      <SiteFooter />
+    </div>
+  )
 }

@@ -12,6 +12,9 @@ interface SettingsRow {
   slot_duration_minutes: number
   open_hour: number
   close_hour: number
+  about: string
+  address: string
+  instagram_url: string | null
 }
 
 function fromRow(row: SettingsRow): Settings {
@@ -25,6 +28,9 @@ function fromRow(row: SettingsRow): Settings {
     slotDurationMinutes: row.slot_duration_minutes,
     openHour: row.open_hour,
     closeHour: row.close_hour,
+    about: row.about,
+    address: row.address,
+    instagramUrl: row.instagram_url ?? undefined,
   }
 }
 
@@ -45,10 +51,14 @@ interface SettingsState {
   slotDurationMinutes: number
   openHour: number
   closeHour: number
+  about: string
+  address: string
+  instagramUrl?: string
   loading: boolean
   venueChecked: boolean
   fetchSettingsForOwner: (ownerId: string) => Promise<void>
   fetchSettingsBySlug: (slug: string) => Promise<boolean>
+  fetchDefaultSettings: () => Promise<boolean>
   createVenue: (input: CreateVenueInput) => Promise<string | null>
   updateSettings: (patch: Partial<Settings>) => Promise<string | null>
   reset: () => void
@@ -64,6 +74,9 @@ const defaultState = {
   slotDurationMinutes: 60,
   openHour: 8,
   closeHour: 23,
+  about: '',
+  address: '',
+  instagramUrl: undefined as string | undefined,
   loading: false,
   venueChecked: false,
 }
@@ -97,6 +110,16 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     set({ venueChecked: true, loading: false })
     return false
   },
+  fetchDefaultSettings: async () => {
+    set({ loading: true })
+    const { data, error } = await supabase.from('settings').select('*').limit(1).maybeSingle()
+    if (!error && data) {
+      set({ ...fromRow(data), venueChecked: true, loading: false })
+      return true
+    }
+    set({ venueChecked: true, loading: false })
+    return false
+  },
   createVenue: async (input) => {
     const { data, error } = await supabase
       .from('settings')
@@ -122,6 +145,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (patch.slotDurationMinutes !== undefined) row.slot_duration_minutes = patch.slotDurationMinutes
     if (patch.openHour !== undefined) row.open_hour = patch.openHour
     if (patch.closeHour !== undefined) row.close_hour = patch.closeHour
+    if (patch.about !== undefined) row.about = patch.about
+    if (patch.address !== undefined) row.address = patch.address
+    if (patch.instagramUrl !== undefined) row.instagram_url = patch.instagramUrl ?? null
 
     const { error } = await supabase.from('settings').update(row).eq('id', id)
     if (error) return error.message

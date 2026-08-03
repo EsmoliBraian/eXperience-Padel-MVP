@@ -1,8 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { VenueDirectoryPage } from '@/features/booking/VenueDirectoryPage'
-import { PublicVenueLayout } from '@/features/booking/PublicVenueLayout'
-import { UserHomePage } from '@/features/booking/UserHomePage'
+import { PublicLayout } from '@/features/booking/PublicLayout'
+import { LandingPage } from '@/features/booking/LandingPage'
 import { BookingFlowPage } from '@/features/booking/BookingFlowPage'
 import { TorneosPage } from '@/features/booking/TorneosPage'
 import { RankingPage } from '@/features/booking/RankingPage'
@@ -67,10 +66,8 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<AdminFallback />}>
         <Routes>
-          <Route path="/" element={<VenueDirectoryPage />} />
-
-          <Route path="/:venueSlug" element={<PublicVenueLayout />}>
-            <Route index element={<UserHomePage />} />
+          <Route path="/" element={<PublicLayout />}>
+            <Route index element={<LandingPage />} />
             <Route path="reservar" element={<BookingFlowPage />} />
             <Route path="torneos" element={<TorneosPage />} />
             <Route path="ranking" element={<RankingPage />} />

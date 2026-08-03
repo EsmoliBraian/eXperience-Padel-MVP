@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
 import { useReservationsStore } from '@/store/reservationsStore'
@@ -17,7 +16,6 @@ interface SelectedSlot {
 }
 
 export function BookingFlowPage() {
-  const { venueSlug } = useParams()
   const settings = useSettingsStore()
   const courts = useCourtsStore((s) => s.courts)
   const reservations = useReservationsStore((s) => s.reservations)
@@ -74,14 +72,13 @@ export function BookingFlowPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col p-5">
-      <Link to={`/${venueSlug}`} className="mb-4 text-sm text-gray-400">
-        &larr; Volver
-      </Link>
-
+    <div className="mx-auto flex max-w-xl flex-col px-5 py-14 sm:py-20">
       {step === 'slot' && (
         <>
-          <h1 className="mb-4 text-lg font-semibold text-gray-50">Elegi fecha</h1>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary-500">
+            Reservar
+          </p>
+          <h1 className="mb-6 text-2xl font-semibold text-gray-50 sm:text-3xl">Elegi fecha</h1>
           <div className="mb-4 flex gap-2">
             {days.map((d) => {
               const key = toDateKey(d)
@@ -158,7 +155,7 @@ export function BookingFlowPage() {
 
       {step === 'summary' && selectedSlot && (
         <>
-          <h1 className="mb-4 text-lg font-semibold text-gray-50">Tu reserva</h1>
+          <h1 className="mb-6 text-2xl font-semibold text-gray-50 sm:text-3xl">Tu reserva</h1>
           <div className="mb-4 space-y-1 rounded-lg border border-gray-800 bg-gray-900 p-3 text-sm">
             <p className="text-gray-400">
               Fecha <span className="float-right text-gray-100">{formatLongDate(fromDateKey(selectedDate))}</span>
@@ -190,7 +187,9 @@ export function BookingFlowPage() {
 
       {step === 'confirm' && selectedSlot && (
         <>
-          <h1 className="mb-4 text-lg font-semibold text-gray-50">Confirma tu reserva</h1>
+          <h1 className="mb-6 text-2xl font-semibold text-gray-50 sm:text-3xl">
+            Confirma tu reserva
+          </h1>
           <div className="mb-4 rounded-lg border border-success/40 bg-success/10 p-4 text-sm text-gray-200">
             <p className="mb-2 font-medium text-success">
               Seras redirigido a WhatsApp para confirmar tu reserva con la cancha.
