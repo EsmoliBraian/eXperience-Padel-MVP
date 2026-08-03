@@ -5,17 +5,20 @@ import { TurnoCheckoutGroup } from '@/components/admin/TurnoCheckoutGroup'
 
 interface SaleWorkspaceProps {
   reservationId?: string
+  fixedSlotLabel?: string
   onLabelChange?: (label: string) => void
 }
 
-export function SaleWorkspace({ reservationId, onLabelChange }: SaleWorkspaceProps) {
+export function SaleWorkspace({ reservationId, fixedSlotLabel, onLabelChange }: SaleWorkspaceProps) {
   const reservations = useReservationsStore((s) => s.reservations)
   const linkedReservation = reservationId
     ? reservations.find((r) => r.id === reservationId)
     : undefined
   const turnoConfirmed = linkedReservation?.status === 'confirmado'
 
-  const label = linkedReservation ? `${linkedReservation.time}hs` : 'Cuenta libre'
+  const label = linkedReservation
+    ? `${linkedReservation.time}hs`
+    : (fixedSlotLabel ?? 'Cuenta libre')
   const onLabelChangeRef = useRef(onLabelChange)
   useEffect(() => {
     onLabelChangeRef.current = onLabelChange

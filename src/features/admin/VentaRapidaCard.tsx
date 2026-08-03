@@ -6,10 +6,13 @@ interface Tab {
   id: string
   label: string
   reservationId?: string
+  fixedSlotId?: string
+  fixedSlotLabel?: string
 }
 
 export interface VentaRapidaCardHandle {
   openReservation: (reservationId: string) => void
+  openFixedSlot: (fixedSlotId: string, label: string) => void
 }
 
 export const VentaRapidaCard = forwardRef<VentaRapidaCardHandle>((_props, ref) => {
@@ -29,6 +32,16 @@ export const VentaRapidaCard = forwardRef<VentaRapidaCardHandle>((_props, ref) =
       }
       const id = `tab-${nextIdRef.current++}`
       setTabs((prev) => [...prev, { id, label: 'Turno', reservationId }])
+      setActiveTabId(id)
+    },
+    openFixedSlot(fixedSlotId: string, label: string) {
+      const existing = tabsRef.current.find((t) => t.fixedSlotId === fixedSlotId)
+      if (existing) {
+        setActiveTabId(existing.id)
+        return
+      }
+      const id = `tab-${nextIdRef.current++}`
+      setTabs((prev) => [...prev, { id, label, fixedSlotId, fixedSlotLabel: label }])
       setActiveTabId(id)
     },
   }))
@@ -98,6 +111,7 @@ export const VentaRapidaCard = forwardRef<VentaRapidaCardHandle>((_props, ref) =
         <div key={tab.id} className={activeTabId === tab.id ? '' : 'hidden'}>
           <SaleWorkspace
             reservationId={tab.reservationId}
+            fixedSlotLabel={tab.fixedSlotLabel}
             onLabelChange={(label) => handleLabelChange(tab.id, label)}
           />
         </div>

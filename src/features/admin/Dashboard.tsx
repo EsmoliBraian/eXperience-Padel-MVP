@@ -189,14 +189,24 @@ export function Dashboard() {
                               )}
                             </button>
                           ) : fixedSlot ? (
-                            <div className="space-y-0.5" title="Turno fijo semanal">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                ventaRapidaRef.current?.openFixedSlot(
+                                  fixedSlot.id,
+                                  `${fixedSlot.customerName || 'Turno fijo'} — ${time}hs`,
+                                )
+                              }
+                              className="space-y-0.5 text-left hover:opacity-80"
+                              title="Abrir cuenta en Venta rapida"
+                            >
                               <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-brand-300">
                                 Turno fijo
                               </span>
                               {fixedSlot.customerName && (
                                 <p className="text-gray-400">{fixedSlot.customerName}</p>
                               )}
-                            </div>
+                            </button>
                           ) : (
                             <span className="rounded-full bg-[#24262A] px-2 py-0.5 text-[#A7ADB6]">
                               Disponible
