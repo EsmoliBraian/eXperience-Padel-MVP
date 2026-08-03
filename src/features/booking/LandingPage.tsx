@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCourtsStore } from '@/store/courtsStore'
@@ -7,19 +7,11 @@ import { useSlidesStore } from '@/store/slidesStore'
 import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
 import { useRankingStore } from '@/store/rankingStore'
 import { TournamentCard } from '@/components/TournamentCard'
+import { BlogPostCard } from '@/components/BlogPostCard'
+import { PadelHeroBackground } from '@/components/site/PadelHeroBackground'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 
-const HERO_ROTATE_MS = 6000
 const MEDAL_COLORS = ['#FFD700', '#C7CBD1', '#CD7F32']
-
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
 
 function ArrowIcon() {
   return (
@@ -89,33 +81,11 @@ export function LandingPage() {
   const rankingEntries = useRankingStore((s) => s.entries)
 
   const sortedSlides = useMemo(() => [...slides].sort((a, b) => a.order - b.order), [slides])
-  const [heroIndex, setHeroIndex] = useState(0)
-
-  useEffect(() => {
-    if (sortedSlides.length <= 1) return
-    const interval = setInterval(() => {
-      setHeroIndex((i) => (i + 1) % sortedSlides.length)
-    }, HERO_ROTATE_MS)
-    return () => clearInterval(interval)
-  }, [sortedSlides.length])
-
-  const hero = sortedSlides.length > 0 ? sortedSlides[heroIndex % sortedSlides.length] : undefined
+  const latestPosts = sortedSlides.slice(0, 3)
 
   const upcomingTournaments = useMemo(
     () => [...tournaments].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3),
     [tournaments],
-  )
-
-  const firstCategory = rankingCategories[0]
-  const podium = useMemo(
-    () =>
-      firstCategory
-        ? rankingEntries
-            .filter((e) => e.categoryId === firstCategory.id)
-            .sort((a, b) => b.totalPoints - a.totalPoints)
-            .slice(0, 3)
-        : [],
-    [rankingEntries, firstCategory],
   )
 
   const whatsappLink = whatsappPhone
@@ -128,25 +98,18 @@ export function LandingPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative flex min-h-[520px] items-end overflow-hidden sm:min-h-[600px]">
-        <div className="absolute inset-0">
-          {hero?.imageUrl ? (
-            <img src={hero.imageUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_top,_theme(colors.primary.900)_0%,_theme(colors.gray.950)_65%)]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-gray-950/20" />
-        </div>
+      <section className="relative flex min-h-[560px] items-end overflow-hidden sm:min-h-[640px]">
+        <PadelHeroBackground />
 
-        <div className="relative mx-auto w-full max-w-6xl px-5 pb-14 pt-24">
+        <div className="relative mx-auto w-full max-w-6xl px-5 pb-16 pt-24">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary-500">
             {venueName}
           </p>
           <h1 className="mt-3 max-w-2xl text-4xl font-bold leading-tight text-gray-50 sm:text-5xl">
-            {hero?.title ?? 'Tu cancha de padel, lista cuando quieras'}
+            Tu cancha de padel, lista cuando quieras
           </h1>
           <p className="mt-4 max-w-xl text-base text-gray-300 sm:text-lg">
-            {hero?.subtitle ?? 'Reserva tu turno en segundos y confirmalo directo por WhatsApp.'}
+            Reserva tu turno en segundos y confirmalo directo por WhatsApp.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -163,22 +126,6 @@ export function LandingPage() {
               Ver ranking
             </Link>
           </div>
-
-          {sortedSlides.length > 1 && (
-            <div className="mt-10 flex gap-1.5">
-              {sortedSlides.map((s, i) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setHeroIndex(i)}
-                  aria-label={`Slide ${i + 1}`}
-                  className={`h-1.5 w-6 rounded-full transition-colors ${
-                    i === heroIndex % sortedSlides.length ? 'bg-primary-500' : 'bg-gray-700'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -219,29 +166,22 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Novedades */}
-      {sortedSlides.length > 0 && (
+      {/* Blog */}
+      {latestPosts.length > 0 && (
         <section className="border-t border-gray-800/60 bg-gray-925/40">
           <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-            <SectionHeading eyebrow="Novedades" title="Lo ultimo del club" />
+            <SectionHeading eyebrow="Blog" title="Lo ultimo del club" cta={{ to: '/blog', label: 'Ver todos' }} />
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {sortedSlides.map((s) => (
-                <div
-                  key={s.id}
-                  className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900 shadow-card"
-                >
-                  {s.imageUrl && (
-                    <div className="aspect-[16/10] w-full">
-                      <img src={s.imageUrl} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <p className="text-base font-semibold text-gray-50">{s.title}</p>
-                    {s.subtitle && <p className="mt-1 text-sm text-gray-400">{s.subtitle}</p>}
-                  </div>
-                </div>
+              {latestPosts.map((post) => (
+                <BlogPostCard key={post.id} post={post} />
               ))}
             </div>
+            <Link
+              to="/blog"
+              className="mt-6 flex items-center gap-1 text-sm font-medium text-primary-500 hover:underline sm:hidden"
+            >
+              Ver todos los posts <ArrowIcon />
+            </Link>
           </div>
         </section>
       )}
@@ -269,54 +209,54 @@ export function LandingPage() {
       )}
 
       {/* Ranking */}
-      {podium.length > 0 && (
+      {rankingCategories.length > 0 && (
         <section className="border-t border-gray-800/60 bg-gray-925/40">
           <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-            <SectionHeading
-              eyebrow="Ranking"
-              title={firstCategory ? firstCategory.name : 'Ranking del club'}
-              cta={{ to: '/ranking', label: 'Ver ranking completo' }}
-            />
-            <div className="grid grid-cols-3 items-end gap-4 sm:max-w-md">
-              {podium.map((entry, i) => {
-                const place = i + 1
-                const color = MEDAL_COLORS[place - 1]
+            <SectionHeading eyebrow="Ranking" title="Nuestras categorias" />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {rankingCategories.map((category) => {
+                const top = rankingEntries
+                  .filter((e) => e.categoryId === category.id)
+                  .sort((a, b) => b.totalPoints - a.totalPoints)
+                  .slice(0, 3)
                 return (
-                  <div
-                    key={entry.id}
-                    className={`flex flex-col items-center rounded-xl border bg-gray-900 p-4 ${
-                      place === 1 ? 'border-primary-500/50 shadow-glow-sm' : 'border-gray-800'
-                    }`}
-                    style={{ order: place === 1 ? 0 : place === 2 ? -1 : 1 }}
+                  <Link
+                    key={category.id}
+                    to={`/ranking?cat=${category.id}`}
+                    className="group flex flex-col rounded-xl border border-gray-800 bg-gray-900 p-5 shadow-card transition-colors hover:border-primary-500/50"
                   >
-                    <div className="relative">
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-gray-950"
-                        style={{ backgroundColor: color }}
-                      >
-                        {initials(entry.playerName)}
-                      </div>
-                      <span
-                        className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-gray-950"
-                        style={{ backgroundColor: color }}
-                      >
-                        {place}
-                      </span>
+                    <p className="text-base font-semibold text-gray-50">{category.name}</p>
+
+                    <div className="mt-4 flex-1 space-y-2.5">
+                      {top.length > 0 ? (
+                        top.map((entry, i) => (
+                          <div key={entry.id} className="flex items-center justify-between text-sm">
+                            <span className="flex min-w-0 items-center gap-2 text-gray-300">
+                              <span
+                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-gray-950"
+                                style={{ backgroundColor: MEDAL_COLORS[i] }}
+                              >
+                                {i + 1}
+                              </span>
+                              <span className="truncate">{entry.playerName}</span>
+                            </span>
+                            <span className="shrink-0 font-semibold text-primary-500">
+                              {entry.totalPoints}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">Sin resultados todavia.</p>
+                      )}
                     </div>
-                    <p className="mt-2 max-w-full truncate text-xs font-medium text-gray-100">
-                      {entry.playerName}
-                    </p>
-                    <p className="text-sm font-bold text-primary-500">{entry.totalPoints}</p>
-                  </div>
+
+                    <span className="mt-5 flex items-center gap-1 text-sm font-medium text-primary-500">
+                      Ver tabla completa <ArrowIcon />
+                    </span>
+                  </Link>
                 )
               })}
             </div>
-            <Link
-              to="/ranking"
-              className="mt-6 flex items-center gap-1 text-sm font-medium text-primary-500 hover:underline sm:hidden"
-            >
-              Ver ranking completo <ArrowIcon />
-            </Link>
           </div>
         </section>
       )}

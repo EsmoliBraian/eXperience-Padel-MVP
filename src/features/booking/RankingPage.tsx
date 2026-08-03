@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useRankingCategoriesStore } from '@/store/rankingCategoriesStore'
 import { useRankingStore } from '@/store/rankingStore'
@@ -71,10 +72,12 @@ export function RankingPage() {
   const venueName = useSettingsStore((s) => s.venueName)
   const categories = useRankingCategoriesStore((s) => s.categories)
   const entries = useRankingStore((s) => s.entries)
+  const [searchParams] = useSearchParams()
+  const categoryFromUrl = searchParams.get('cat')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [shared, setShared] = useState(false)
 
-  const activeCategoryId = selectedCategoryId || categories[0]?.id || ''
+  const activeCategoryId = selectedCategoryId || categoryFromUrl || categories[0]?.id || ''
   const activeCategoryName = categories.find((c) => c.id === activeCategoryId)?.name ?? ''
   const categoryEntries = useMemo(
     () =>

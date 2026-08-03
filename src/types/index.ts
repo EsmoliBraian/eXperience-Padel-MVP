@@ -94,6 +94,7 @@ export interface HeroSlide {
   imageUrl: string
   title: string
   subtitle: string
+  body: string
   order: number
   published: boolean
 }

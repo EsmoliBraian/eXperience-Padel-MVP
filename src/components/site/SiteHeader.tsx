@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 
 const NAV_LINKS = [
   { to: '/', label: 'Inicio', end: true },
+  { to: '/blog', label: 'Blog', end: false },
   { to: '/torneos', label: 'Torneos', end: false },
   { to: '/ranking', label: 'Ranking', end: false },
 ]

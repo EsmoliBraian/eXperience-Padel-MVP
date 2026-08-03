@@ -111,6 +111,7 @@ create table if not exists hero_slides (
   image_url text not null default '',
   title text not null,
   subtitle text not null default '',
+  body text not null default '',
   "order" int not null default 0,
   published boolean not null default true
 );

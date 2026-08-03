@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', end: true, icon: 'fa-gauge', color: '#22E6B8' },
   { to: '/admin/reservas', label: 'Reservas', icon: 'fa-calendar-check', color: '#4CA8FF' },
   { to: '/admin/horarios', label: 'Horarios', icon: 'fa-clock', color: '#FFC857' },
-  { to: '/admin/slides', label: 'Slides / Hero', icon: 'fa-images', color: '#B68CFF' },
+  { to: '/admin/slides', label: 'Blog / Novedades', icon: 'fa-images', color: '#B68CFF' },
   { to: '/admin/torneos', label: 'Torneos', icon: 'fa-trophy', color: '#B68CFF' },
   { to: '/admin/ranking', label: 'Ranking', icon: 'fa-ranking-star', color: '#FF7FA8' },
   { to: '/admin/productos', label: 'Productos', icon: 'fa-cart-shopping', color: '#66D18F' },

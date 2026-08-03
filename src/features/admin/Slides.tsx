@@ -11,16 +11,22 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(slide.title)
   const [subtitle, setSubtitle] = useState(slide.subtitle)
+  const [body, setBody] = useState(slide.body)
   const [imageUrl, setImageUrl] = useState(slide.imageUrl)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const dirty = title !== slide.title || subtitle !== slide.subtitle || imageUrl !== slide.imageUrl
+  const dirty =
+    title !== slide.title ||
+    subtitle !== slide.subtitle ||
+    body !== slide.body ||
+    imageUrl !== slide.imageUrl
 
   function handleEdit() {
     setTitle(slide.title)
     setSubtitle(slide.subtitle)
+    setBody(slide.body)
     setImageUrl(slide.imageUrl)
     setError(null)
     setEditing(true)
@@ -29,6 +35,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
   function handleCancel() {
     setTitle(slide.title)
     setSubtitle(slide.subtitle)
+    setBody(slide.body)
     setImageUrl(slide.imageUrl)
     setError(null)
     setEditing(false)
@@ -36,7 +43,7 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
 
   async function handleSave() {
     setSaving(true)
-    const saveError = await updateSlide(slide.id, { title, subtitle, imageUrl })
+    const saveError = await updateSlide(slide.id, { title, subtitle, body, imageUrl })
     setSaving(false)
     setError(saveError)
     if (!saveError) setEditing(false)
@@ -148,6 +155,16 @@ function SlideCard({ slide }: { slide: HeroSlide }) {
           />
         </label>
         <label className="block text-sm text-gray-400 sm:col-span-2">
+          Contenido completo del post
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={6}
+            placeholder="Escribi la nota completa. Esto se muestra cuando alguien hace click en 'Leer mas'."
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-2 text-gray-100"
+          />
+        </label>
+        <label className="block text-sm text-gray-400 sm:col-span-2">
           URL de imagen
           <input
             value={imageUrl}
@@ -215,8 +232,9 @@ export function Slides() {
     setError(
       await addSlide({
         imageUrl: '',
-        title: 'Nuevo slide',
+        title: 'Nuevo post',
         subtitle: '',
+        body: '',
         order: slides.length,
         published: false,
       }),
@@ -226,15 +244,19 @@ export function Slides() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-50">Slides / Hero</h1>
+        <h1 className="text-xl font-semibold text-gray-50">Blog / Novedades</h1>
         <button
           type="button"
           onClick={handleAdd}
           className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-gray-950 hover:bg-primary-400"
         >
-          + Nuevo slide
+          + Nuevo post
         </button>
       </div>
+      <p className="text-sm text-gray-500">
+        Estos posts aparecen en la seccion "Blog" del sitio publico. El titulo y la bajada se ven
+        en la tarjeta; el contenido completo se muestra al hacer click en "Leer mas".
+      </p>
 
       <ErrorText error={error} />
 
@@ -242,7 +264,7 @@ export function Slides() {
         {sortedSlides.map((slide) => (
           <SlideCard key={slide.id} slide={slide} />
         ))}
-        {slides.length === 0 && <p className="text-sm text-gray-500">No hay slides cargados.</p>}
+        {slides.length === 0 && <p className="text-sm text-gray-500">No hay posts cargados.</p>}
       </div>
     </div>
   )

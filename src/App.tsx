@@ -5,6 +5,8 @@ import { LandingPage } from '@/features/booking/LandingPage'
 import { BookingFlowPage } from '@/features/booking/BookingFlowPage'
 import { TorneosPage } from '@/features/booking/TorneosPage'
 import { RankingPage } from '@/features/booking/RankingPage'
+import { BlogPage } from '@/features/booking/BlogPage'
+import { BlogPostPage } from '@/features/booking/BlogPostPage'
 import { ProtectedRoute } from '@/features/admin/ProtectedRoute'
 import { useAdminAuthStore } from '@/store/adminAuthStore'
 
@@ -71,6 +73,8 @@ function App() {
             <Route path="reservar" element={<BookingFlowPage />} />
             <Route path="torneos" element={<TorneosPage />} />
             <Route path="ranking" element={<RankingPage />} />
+            <Route path="blog" element={<BlogPage />} />
+            <Route path="blog/:id" element={<BlogPostPage />} />
           </Route>
 
           <Route path="/admin/login" element={<AdminLoginPage />} />

@@ -8,6 +8,7 @@ interface SlideRow {
   image_url: string
   title: string
   subtitle: string
+  body: string
   order: number
   published: boolean
 }
@@ -18,6 +19,7 @@ function fromRow(row: SlideRow): HeroSlide {
     imageUrl: row.image_url,
     title: row.title,
     subtitle: row.subtitle,
+    body: row.body,
     order: row.order,
     published: row.published,
   }
@@ -57,6 +59,7 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
         image_url: slide.imageUrl,
         title: slide.title,
         subtitle: slide.subtitle,
+        body: slide.body,
         order: slide.order,
         published: slide.published,
       })
@@ -71,6 +74,7 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
     if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl
     if (patch.title !== undefined) row.title = patch.title
     if (patch.subtitle !== undefined) row.subtitle = patch.subtitle
+    if (patch.body !== undefined) row.body = patch.body
     if (patch.order !== undefined) row.order = patch.order
     if (patch.published !== undefined) row.published = patch.published
 
