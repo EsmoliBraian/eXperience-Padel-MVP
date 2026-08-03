@@ -16,7 +16,9 @@ export function KpiCard({ label, value, delta, icon, accentColor = '#B8FF3B' }: 
         )}
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-[32px] font-bold leading-none text-gray-50">{value}</span>
+        <span className="text-2xl font-bold leading-none text-gray-50 lg:text-[32px]">
+          {value}
+        </span>
         {delta && <span className="text-xs font-medium text-primary-500">{delta}</span>}
       </div>
     </div>

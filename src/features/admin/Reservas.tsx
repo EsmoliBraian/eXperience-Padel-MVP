@@ -250,33 +250,35 @@ function CanchaRow({ court }: { court: Court }) {
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
+          className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100 sm:flex-1"
         />
         <input
           type="number"
           value={price}
           onChange={(e) => setPrice(Number(e.target.value))}
-          className="w-32 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
+          className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100 sm:w-32"
         />
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!dirty || saving}
-          className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
-        >
-          {saving ? '...' : 'Guardar'}
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="text-xs text-danger hover:underline"
-        >
-          Eliminar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+          >
+            {saving ? '...' : 'Guardar'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="text-xs text-danger hover:underline"
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
       <ErrorText error={error} />
     </div>
@@ -320,25 +322,25 @@ function CanchasPanel() {
         {courts.length === 0 && <p className="text-sm text-gray-500">No hay canchas cargadas.</p>}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-gray-800 pt-3">
+      <div className="flex flex-col gap-2 border-t border-gray-800 pt-3 sm:flex-row sm:items-center">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nombre de la cancha"
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
+          className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100 sm:flex-1"
         />
         <input
           type="number"
           value={newPrice}
           onChange={(e) => setNewPrice(e.target.value)}
           placeholder="Precio"
-          className="w-32 rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100"
+          className="w-full rounded-lg border border-gray-700 bg-gray-925 px-3 py-1.5 text-sm text-gray-100 sm:w-32"
         />
         <button
           type="button"
           onClick={handleAdd}
           disabled={!canAdd || adding}
-          className="rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50"
+          className="w-full rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-medium text-gray-950 hover:bg-primary-400 disabled:opacity-50 sm:w-auto"
         >
           + Agregar
         </button>
@@ -456,10 +458,15 @@ export function Reservas() {
         </table>
       </div>
 
-      <p className="text-xs text-gray-500">
-        {filtered.length} reserva(s) — <StatusBadge status="reservado" /> pendientes de confirmar por el cliente,{' '}
-        <StatusBadge status="confirmado" /> confirmadas.
-      </p>
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs text-gray-500">
+        <span>{filtered.length} reserva(s) —</span>
+        <span className="inline-flex items-center gap-1.5">
+          <StatusBadge status="reservado" /> pendientes de confirmar por el cliente,
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <StatusBadge status="confirmado" /> confirmadas.
+        </span>
+      </div>
     </div>
   )
 }
