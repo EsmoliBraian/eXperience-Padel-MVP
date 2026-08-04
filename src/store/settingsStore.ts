@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
+import { deleteImage } from '@/lib/storage'
 import type { Settings } from '@/types'
 
 interface SettingsRow {
@@ -136,7 +137,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     return null
   },
   updateSettings: async (patch) => {
-    const { id } = get()
+    const { id, logoUrl: previousLogoUrl } = get()
     if (!id) return 'No se encontro la configuracion.'
     const row: Partial<SettingsRow> = {}
     if (patch.venueName !== undefined) row.venue_name = patch.venueName
@@ -152,6 +153,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     const { error } = await supabase.from('settings').update(row).eq('id', id)
     if (error) return error.message
     set({ ...patch })
+    if (patch.logoUrl !== undefined && previousLogoUrl && previousLogoUrl !== patch.logoUrl) {
+      deleteImage(previousLogoUrl).catch(() => {})
+    }
     return null
   },
   reset: () => set({ ...defaultState }),

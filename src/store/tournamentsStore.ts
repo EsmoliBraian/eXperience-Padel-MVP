@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
 import { useSettingsStore } from '@/store/settingsStore'
+import { deleteImage } from '@/lib/storage'
 import type { Tournament } from '@/types'
 
 interface TournamentRow {
@@ -67,6 +68,7 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
     return null
   },
   updateTournament: async (id, patch) => {
+    const previous = get().tournaments.find((t) => t.id === id)
     const row: Partial<TournamentRow> = {}
     if (patch.name !== undefined) row.name = patch.name
     if (patch.date !== undefined) row.date = patch.date
@@ -79,12 +81,17 @@ export const useTournamentsStore = create<TournamentsState>()((set, get) => ({
     set({
       tournaments: get().tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t)),
     })
+    if (patch.imageUrl !== undefined && previous?.imageUrl && previous.imageUrl !== patch.imageUrl) {
+      deleteImage(previous.imageUrl).catch(() => {})
+    }
     return null
   },
   deleteTournament: async (id) => {
+    const tournament = get().tournaments.find((t) => t.id === id)
     const { error } = await supabase.from('tournaments').delete().eq('id', id)
     if (error) return error.message
     set({ tournaments: get().tournaments.filter((t) => t.id !== id) })
+    if (tournament?.imageUrl) deleteImage(tournament.imageUrl).catch(() => {})
     return null
   },
 }))

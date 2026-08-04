@@ -17,7 +17,7 @@ export function TournamentCard({ tournament, whatsappPhone }: TournamentCardProp
     <div className="flex flex-col overflow-hidden rounded-xl border border-gray-800 bg-gray-900 shadow-card">
       <div className="aspect-[16/10] w-full shrink-0 bg-gray-925">
         {tournament.imageUrl ? (
-          <img src={tournament.imageUrl} alt="" className="h-full w-full object-cover" />
+          <img src={tournament.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-gray-700">
             <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.5">

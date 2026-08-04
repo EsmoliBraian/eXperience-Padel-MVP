@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabaseClient'
 import { useSettingsStore } from '@/store/settingsStore'
+import { deleteImage } from '@/lib/storage'
 import type { HeroSlide } from '@/types'
 
 interface SlideRow {
@@ -70,6 +71,7 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
     return null
   },
   updateSlide: async (id, patch) => {
+    const previous = get().slides.find((s) => s.id === id)
     const row: Partial<SlideRow> = {}
     if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl
     if (patch.title !== undefined) row.title = patch.title
@@ -81,12 +83,17 @@ export const useSlidesStore = create<SlidesState>()((set, get) => ({
     const { error } = await supabase.from('hero_slides').update(row).eq('id', id)
     if (error) return error.message
     set({ slides: get().slides.map((s) => (s.id === id ? { ...s, ...patch } : s)) })
+    if (patch.imageUrl !== undefined && previous?.imageUrl && previous.imageUrl !== patch.imageUrl) {
+      deleteImage(previous.imageUrl).catch(() => {})
+    }
     return null
   },
   deleteSlide: async (id) => {
+    const slide = get().slides.find((s) => s.id === id)
     const { error } = await supabase.from('hero_slides').delete().eq('id', id)
     if (error) return error.message
     set({ slides: get().slides.filter((s) => s.id !== id) })
+    if (slide?.imageUrl) deleteImage(slide.imageUrl).catch(() => {})
     return null
   },
 }))
